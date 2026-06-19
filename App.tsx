@@ -150,7 +150,7 @@ export default function App() {
   // Compartilhamento geral
   const handleShareAll = async () => {
     try {
-      const message = `Bitzrun — Minha Consistência de Corrida está em ${profile.consistencyScore}/100! Já completei ${runs.length} sessões.\n\nDesenvolva consistência você também!`;
+      const message = `Oie, eu tô usando o Bitzrun pra me ajudar a correr mais.\nMinha Consistência de Corrida está em ${profile.consistencyScore}/100! Já completei ${runs.length} sessões.\nVem correr com o Bitzrun você também!`;
       await Share.share({ message });
     } catch {
       Alert.alert('Erro', 'Não foi possível compartilhar.');

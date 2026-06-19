@@ -20,7 +20,18 @@ interface DashboardScreenProps {
   onSignOut: () => void;
 }
 
-const WEEKLY_GOAL_RUNS = 3; // Facilmente configurável
+const FRASES_MOTIVADORAS = [
+  "Uma corrida curta ainda conta.",
+  "O retorno conta mais que a velocidade.",
+  "Hoje você venceu a resistência.",
+  "Você manteve o hábito vivo.",
+  "Cada passo constrói consistência.",
+  "O importante é aparecer.",
+  "Um quilômetro de cada vez.",
+  "Foco no progresso, não na perfeição.",
+  "A consistência é sua maior vitória.",
+  "Mais um passo em direção à sua evolução."
+];
 
 export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   onStartRunPress,
@@ -90,6 +101,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   // 3. Progresso semanal de 0 a 1
   const progressRatio = Math.min(runsThisWeekCount / weeklyGoal, 1);
 
+  const fraseMotivacional = FRASES_MOTIVADORAS[(runs || []).length % FRASES_MOTIVADORAS.length];
+
   const remainingRuns = weeklyGoal - runsThisWeekCount;
   let supportText = '';
   if (remainingRuns <= 0) {
@@ -145,7 +158,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           <Flame size={12} color={theme.colors.background} strokeWidth={2.5} />
           <Text style={styles.ctaBadgeText}>Foco de hoje</Text>
         </View>
-        <Text style={styles.ctaCardTitle}>Uma corrida curta ainda conta.</Text>
+        <Text style={styles.ctaCardTitle}>{fraseMotivacional}</Text>
         <Text style={styles.ctaCardText}>
           O objetivo de hoje é manter o hábito vivo. Vá devagar, corra no seu tempo.
         </Text>

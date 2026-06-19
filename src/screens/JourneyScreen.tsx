@@ -221,9 +221,9 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
         </View>
       ) : null}
 
-      {/* Seção Cartões de Memória */}
+      {/* Seção Corridas registradas */}
       <View style={styles.memorySection}>
-        <Text style={styles.sectionTitle}>Cartões de Memória</Text>
+        <Text style={styles.sectionTitle}>Corridas registradas</Text>
         {memoryCards.length === 0 ? (
           <View style={styles.emptyMemoryCard}>
             <Text style={styles.emptyMemoryText}>
