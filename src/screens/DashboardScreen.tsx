@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, TextInput, Alert, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, TextInput, Alert, Image, Modal } from 'react-native';
 import { Flame, Check, Edit2, User, Trophy, Calendar, Zap, AlertCircle } from 'lucide-react-native';
 import { StorageService, UserProfile, Run } from '../services/storage';
 import { theme } from '../theme/theme';
@@ -34,6 +34,14 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(profile.name);
   const [greeting, setGreeting] = useState('Bom ver você aqui');
+  
+  const [isGoalModalVisible, setIsGoalModalVisible] = useState(false);
+  const weeklyGoal = profile.weeklyRunGoal ?? 3;
+  const [selectedGoal, setSelectedGoal] = useState(weeklyGoal);
+
+  useEffect(() => {
+    setSelectedGoal(weeklyGoal);
+  }, [weeklyGoal]);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -58,6 +66,12 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     setIsEditingName(false);
   };
 
+  const handleSaveGoal = async () => {
+    const updated = await StorageService.updateWeeklyRunGoal(selectedGoal);
+    onProfileUpdate(updated);
+    setIsGoalModalVisible(false);
+  };
+
   // Calcular métricas reais do usuário baseadas no histórico local
   const now = new Date();
   
@@ -74,7 +88,17 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const totalDistance = (runs || []).reduce((acc, run) => acc + run.distance, 0);
 
   // 3. Progresso semanal de 0 a 1
-  const progressRatio = Math.min(runsThisWeekCount / WEEKLY_GOAL_RUNS, 1);
+  const progressRatio = Math.min(runsThisWeekCount / weeklyGoal, 1);
+
+  const remainingRuns = weeklyGoal - runsThisWeekCount;
+  let supportText = '';
+  if (remainingRuns <= 0) {
+    supportText = 'Meta da semana concluída.';
+  } else if (remainingRuns === 1) {
+    supportText = 'Falta 1 corrida para fechar sua semana.';
+  } else {
+    supportText = `Faltam ${remainingRuns} corridas para fechar sua semana.`;
+  }
 
   return (
     <ScreenContainer scrollable style={styles.container}>
@@ -139,24 +163,20 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         <View style={styles.progressCardContent}>
           <ProgressRing
             progress={progressRatio}
-            value={`${runsThisWeekCount}/${WEEKLY_GOAL_RUNS}`}
-            label="Corridas"
+            value={`${runsThisWeekCount}/${weeklyGoal}`}
+            label="corridas"
             size={110}
             strokeWidth={10}
           />
           <View style={styles.progressCardInfo}>
-            <Text style={styles.progressTitle}>Meta Semanal</Text>
-            <Text style={styles.progressDescription}>
-              Completar pequenas sessões estimula a memória positiva e a persistência.
-            </Text>
-            <View style={styles.streakBadge}>
-              <Zap size={14} color={theme.colors.primary} strokeWidth={2} />
-              <Text style={styles.streakText}>
-                {profile.streak > 0 
-                  ? `${profile.streak} ${profile.streak === 1 ? 'dia seguido' : 'dias seguidos'}`
-                  : 'Inicie sua sequência hoje'}
-              </Text>
-            </View>
+            <Text style={styles.progressTitle}>Meta da semana</Text>
+            <Text style={styles.progressMainText}>{runsThisWeekCount} de {weeklyGoal} corridas feitas</Text>
+            <Text style={styles.progressSupportText}>Sua meta: {weeklyGoal} corridas por semana.</Text>
+            <Text style={styles.progressRemainingText}>{supportText}</Text>
+            
+            <TouchableOpacity style={styles.changeGoalBtn} onPress={() => setIsGoalModalVisible(true)} activeOpacity={0.7}>
+              <Text style={styles.changeGoalBtnText}>Alterar meta</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </AppCard>
@@ -168,7 +188,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           <MetricCard
             title="Corridas / Semana"
             value={runsThisWeekCount}
-            subtitle={`Meta: ${WEEKLY_GOAL_RUNS}`}
+            subtitle={`Meta: ${weeklyGoal}`}
             icon={<Calendar size={16} color={theme.colors.textSecondary} />}
           />
           <MetricCard
@@ -219,6 +239,69 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       <TouchableOpacity style={styles.shortcutLink} onPress={onNavigateToJourney} activeOpacity={0.7}>
         <Text style={styles.shortcutText}>Ver minha jornada completa</Text>
       </TouchableOpacity>
+
+      {/* Modal de Escolha da Meta Semanal */}
+      <Modal
+        visible={isGoalModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setIsGoalModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Escolha sua meta semanal</Text>
+            <Text style={styles.modalText}>Quantas vezes você quer correr por semana?</Text>
+            <Text style={styles.modalSupportText}>Escolha uma meta realista. Você pode mudar depois.</Text>
+
+            <View style={styles.modalOptionsContainer}>
+              {[
+                { val: 2, label: '2x por semana', desc: 'Leve' },
+                { val: 3, label: '3x por semana', desc: 'Equilibrado' },
+                { val: 4, label: '4x por semana', desc: 'Firme' },
+                { val: 5, label: '5x por semana', desc: 'Forte' },
+                { val: 6, label: '6x por semana', desc: 'Intenso' },
+              ].map(opt => (
+                <TouchableOpacity
+                  key={opt.val}
+                  style={[
+                    styles.modalOptionBtn,
+                    selectedGoal === opt.val && styles.modalOptionBtnActive
+                  ]}
+                  onPress={() => setSelectedGoal(opt.val)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[
+                    styles.modalOptionText,
+                    selectedGoal === opt.val && styles.modalOptionTextActive
+                  ]}>
+                    {opt.label} <Text style={[
+                      styles.modalOptionDesc,
+                      selectedGoal === opt.val && styles.modalOptionDescActive
+                    ]}>— {opt.desc}</Text>
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setIsGoalModalVisible(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.modalCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalSaveBtn}
+                onPress={handleSaveGoal}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.modalSaveText}>Salvar meta</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScreenContainer>
   );
 };
@@ -429,5 +512,124 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     textDecorationLine: 'underline',
+  },
+  progressMainText: {
+    color: theme.colors.text,
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  progressSupportText: {
+    color: theme.colors.textSecondary,
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  progressRemainingText: {
+    color: theme.colors.primary,
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: theme.spacing.sm,
+  },
+  changeGoalBtn: {
+    alignSelf: 'flex-start',
+  },
+  changeGoalBtnText: {
+    color: theme.colors.primary,
+    fontSize: 12,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.lg,
+  },
+  modalContent: {
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.md, // 16px
+    padding: theme.spacing.lg,
+    width: '100%',
+    maxWidth: 340,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  modalTitle: {
+    color: theme.colors.text,
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: theme.spacing.xs,
+  },
+  modalText: {
+    color: theme.colors.text,
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  modalSupportText: {
+    color: theme.colors.textSecondary,
+    fontSize: 12,
+    marginBottom: theme.spacing.md,
+    lineHeight: 16,
+  },
+  modalOptionsContainer: {
+    gap: theme.spacing.xs,
+    marginBottom: theme.spacing.lg,
+  },
+  modalOptionBtn: {
+    backgroundColor: theme.colors.background,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  modalOptionBtnActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  modalOptionText: {
+    color: theme.colors.text,
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  modalOptionTextActive: {
+    color: theme.colors.background,
+  },
+  modalOptionDesc: {
+    color: theme.colors.textSecondary,
+    fontWeight: '400',
+    fontSize: 12,
+  },
+  modalOptionDescActive: {
+    color: 'rgba(0,0,0,0.6)',
+    fontWeight: '600',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: theme.spacing.sm,
+  },
+  modalCancelBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: theme.borderRadius.md,
+  },
+  modalCancelText: {
+    color: theme.colors.textSecondary,
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  modalSaveBtn: {
+    backgroundColor: theme.colors.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: theme.borderRadius.md,
+  },
+  modalSaveText: {
+    color: theme.colors.background,
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });

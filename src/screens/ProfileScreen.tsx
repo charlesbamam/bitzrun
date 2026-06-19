@@ -25,7 +25,17 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(profile.name);
-  const [weeklyGoal, setWeeklyGoal] = useState('3'); // Padrão: 3 corridas por semana
+  const [weeklyGoal, setWeeklyGoal] = useState<number>(profile.weeklyRunGoal ?? 3);
+
+  React.useEffect(() => {
+    setWeeklyGoal(profile.weeklyRunGoal ?? 3);
+  }, [profile.weeklyRunGoal]);
+
+  const handleUpdateWeeklyGoal = async (goal: number) => {
+    const updated = await StorageService.updateWeeklyRunGoal(goal);
+    onProfileUpdate(updated);
+    setWeeklyGoal(goal);
+  };
 
   // Estatísticas acumuladas
   const totalRuns = runs.length;
@@ -176,22 +186,22 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         </View>
 
         {/* Metas Semanais */}
-        <Text style={styles.sectionTitle}>Configurações de Metas</Text>
+        <Text style={styles.sectionTitle}>Meta semanal</Text>
         <AppCard style={styles.card}>
           <View style={styles.goalRow}>
             <View style={styles.goalTextContainer}>
-              <Text style={styles.cardItemTitle}>Meta de Treinos Semanal</Text>
-              <Text style={styles.cardItemDesc}>Corridas planejadas por semana</Text>
+              <Text style={styles.cardItemTitle}>Meta semanal</Text>
+              <Text style={styles.cardItemDesc}>{weeklyGoal} corridas por semana</Text>
             </View>
             <View style={styles.goalSelector}>
-              {['2', '3', '4', '5'].map(num => (
+              {[2, 3, 4, 5, 6].map(num => (
                 <TouchableOpacity
                   key={num}
                   style={[
                     styles.goalNumBtn,
                     weeklyGoal === num && styles.goalNumBtnActive
                   ]}
-                  onPress={() => setWeeklyGoal(num)}
+                  onPress={() => handleUpdateWeeklyGoal(num)}
                 >
                   <Text style={[
                     styles.goalNumText,

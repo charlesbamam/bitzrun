@@ -32,6 +32,7 @@ export interface UserProfile {
   streak: number; // sequência atual de corridas seguidas
   lastRunDate?: string;
   avatarUri?: string;
+  weeklyRunGoal?: number;
 }
 
 const KEYS = {
@@ -143,17 +144,25 @@ export const StorageService = {
   async getProfile(): Promise<UserProfile> {
     try {
       const data = await AsyncStorage.getItem(KEYS.PROFILE);
-      if (data) return JSON.parse(data);
+      if (data) {
+        const profile: UserProfile = JSON.parse(data);
+        const goal = profile.weeklyRunGoal;
+        if (goal === undefined || typeof goal !== 'number' || goal < 2 || goal > 6) {
+          profile.weeklyRunGoal = 3;
+        }
+        return profile;
+      }
       
       const defaultProfile: UserProfile = {
         name: 'Corredor',
         consistencyScore: 0,
         streak: 0,
+        weeklyRunGoal: 3,
       };
       await AsyncStorage.setItem(KEYS.PROFILE, JSON.stringify(defaultProfile));
       return defaultProfile;
     } catch {
-      return { name: 'Corredor', consistencyScore: 0, streak: 0 };
+      return { name: 'Corredor', consistencyScore: 0, streak: 0, weeklyRunGoal: 3 };
     }
   },
 
@@ -167,6 +176,14 @@ export const StorageService = {
   async updateProfileAvatar(avatarUri: string): Promise<UserProfile> {
     const profile = await this.getProfile();
     profile.avatarUri = avatarUri;
+    await AsyncStorage.setItem(KEYS.PROFILE, JSON.stringify(profile));
+    return profile;
+  },
+
+  async updateWeeklyRunGoal(goal: number): Promise<UserProfile> {
+    const validGoal = (typeof goal === 'number' && goal >= 2 && goal <= 6) ? goal : 3;
+    const profile = await this.getProfile();
+    profile.weeklyRunGoal = validGoal;
     await AsyncStorage.setItem(KEYS.PROFILE, JSON.stringify(profile));
     return profile;
   },

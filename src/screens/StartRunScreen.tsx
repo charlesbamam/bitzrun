@@ -225,7 +225,7 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
   if (status === 'setup') {
     return (
       <ScreenContainer scrollable>
-        <AppHeader title="Preparar corrida" onBack={onCancel} />
+        <AppHeader title="Meta da corrida" onBack={onCancel} />
 
         <View style={styles.formContent}>
           <AppCard style={styles.setupCard}>
@@ -234,7 +234,7 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
           </AppCard>
 
           <AppCard style={styles.setupCard}>
-            <Text style={styles.questionText}>Qual pequena distância você quer cumprir hoje?</Text>
+            <Text style={styles.questionText}>Qual distância você quer tentar hoje?</Text>
             <Text style={styles.metaTipText}>
               Você escolhe uma distância-alvo. Nesta versão de teste, o app simula o avanço para validar o hábito e o fluxo.
             </Text>
