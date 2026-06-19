@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-nati
 import { Award, Lock, Flame, Calendar, RefreshCw, Zap, Activity, Trophy, Smile, Check } from 'lucide-react-native';
 import { Achievement, formatFriendlyDate, Run } from '../services/storage';
 import { AchievementCard } from '../components/AchievementCard';
+import { theme } from '../theme/theme';
 
 
 interface AchievementsScreenProps {
@@ -333,7 +334,7 @@ const styles = StyleSheet.create({
   tabButton: {
     paddingVertical: 8,
     paddingHorizontal: 16,
-    borderRadius: 20,
+    borderRadius: theme.borderRadius.md,
     marginRight: 8,
     backgroundColor: '#1E1E1E',
     borderWidth: 1,
@@ -396,7 +397,7 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    borderRadius: 20,
+    borderRadius: theme.borderRadius.md,
     padding: 16,
     borderWidth: 1,
   },

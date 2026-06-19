@@ -36,7 +36,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ onSuccess, onNav
   };
 
   return (
-    <ScreenContainer scrollable>
+    <ScreenContainer scrollable avoidKeyboard>
       <View style={styles.content}>
         {/* Header */}
         <View style={styles.logoHeader}>

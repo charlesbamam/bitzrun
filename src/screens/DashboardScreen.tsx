@@ -186,9 +186,9 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       <View style={styles.metricsGrid}>
         <View style={styles.metricsRow}>
           <MetricCard
-            title="Corridas / Semana"
+            title="Meta da semana"
             value={runsThisWeekCount}
-            subtitle={`Meta: ${weeklyGoal}`}
+            subtitle={`Meta: ${weeklyGoal} corridas`}
             icon={<Calendar size={16} color={theme.colors.textSecondary} />}
           />
           <MetricCard

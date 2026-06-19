@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Share, Alert, Dim
 import { Share2, ArrowUpRight } from 'lucide-react-native';
 import { BarChart } from 'react-native-gifted-charts';
 import { Run, MemoryCard, getMoodEmoji } from '../services/storage';
+import { theme } from '../theme/theme';
 
 interface JourneyScreenProps {
   runs: Run[];
@@ -281,7 +282,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#1E1E1E', // Cinza escuro
-    borderRadius: 20,
+    borderRadius: theme.borderRadius.md,
     padding: 20,
     marginBottom: 20,
     borderWidth: 1,
@@ -379,7 +380,7 @@ const styles = StyleSheet.create({
   },
   emptyMemoryCard: {
     backgroundColor: '#1E1E1E',
-    borderRadius: 18,
+    borderRadius: theme.borderRadius.md,
     padding: 24,
     borderWidth: 1.5,
     borderStyle: 'dashed',

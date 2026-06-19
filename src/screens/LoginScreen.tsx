@@ -40,7 +40,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess, onNavigateT
   };
 
   return (
-    <ScreenContainer scrollable>
+    <ScreenContainer scrollable avoidKeyboard>
       <View style={styles.content}>
         {/* Logo/Icon Circle */}
         <View style={styles.logoHeader}>

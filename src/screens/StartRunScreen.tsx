@@ -177,7 +177,7 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
       if (isNaN(parsedValue) || parsedValue <= 0 || parsedValue > 50) {
         Alert.alert(
           'Distância Inválida',
-          'Por favor, insira uma distância decimal maior que 0 e de no máximo 50 km.'
+          'Informe uma distância válida para continuar.'
         );
         return;
       }
@@ -224,7 +224,7 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
 
   if (status === 'setup') {
     return (
-      <ScreenContainer scrollable>
+      <ScreenContainer scrollable avoidKeyboard>
         <AppHeader title="Meta da corrida" onBack={onCancel} />
 
         <View style={styles.formContent}>

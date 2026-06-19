@@ -1,17 +1,19 @@
 import React from 'react';
-import { StyleSheet, View, SafeAreaView, ScrollView, ViewStyle, StatusBar } from 'react-native';
+import { StyleSheet, View, SafeAreaView, ScrollView, ViewStyle, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
 import { theme } from '../theme/theme';
 
 interface ScreenContainerProps {
   children: React.ReactNode;
   style?: ViewStyle;
   scrollable?: boolean;
+  avoidKeyboard?: boolean;
 }
 
 export const ScreenContainer: React.FC<ScreenContainerProps> = ({
   children,
   style,
   scrollable = false,
+  avoidKeyboard = false,
 }) => {
   const content = (
     <View style={[styles.content, style]}>
@@ -19,19 +21,30 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
     </View>
   );
 
+  const mainWrapper = scrollable ? (
+    <ScrollView
+      style={styles.scrollView}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+    >
+      {content}
+    </ScrollView>
+  ) : (
+    content
+  );
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
-      {scrollable ? (
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
+      {avoidKeyboard ? (
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoid}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          {content}
-        </ScrollView>
+          {mainWrapper}
+        </KeyboardAvoidingView>
       ) : (
-        content
+        mainWrapper
       )}
     </SafeAreaView>
   );
@@ -52,5 +65,8 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: theme.spacing.md,
     backgroundColor: theme.colors.background,
+  },
+  keyboardAvoid: {
+    flex: 1,
   },
 });

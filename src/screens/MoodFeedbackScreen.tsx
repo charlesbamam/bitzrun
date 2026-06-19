@@ -124,7 +124,7 @@ export const MoodFeedbackScreen: React.FC<MoodFeedbackScreenProps> = ({
   }
 
   return (
-    <ScreenContainer scrollable>
+    <ScreenContainer scrollable avoidKeyboard>
       <AppHeader title="Como se sente?" />
 
       <View style={styles.formContainer}>

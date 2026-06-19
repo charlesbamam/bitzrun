@@ -101,7 +101,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   };
 
   return (
-    <ScreenContainer scrollable>
+    <ScreenContainer scrollable avoidKeyboard>
       {/* Cabeçalho */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
