@@ -186,11 +186,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         </View>
 
         {/* Metas Semanais */}
-        <Text style={styles.sectionTitle}>Meta semanal</Text>
+        <Text style={styles.sectionTitle}>Meta da semana</Text>
         <AppCard style={styles.card}>
           <View style={styles.goalRow}>
             <View style={styles.goalTextContainer}>
-              <Text style={styles.cardItemTitle}>Meta semanal</Text>
+              <Text style={styles.cardItemTitle}>Meta da semana</Text>
               <Text style={styles.cardItemDesc}>{weeklyGoal} corridas por semana</Text>
             </View>
             <View style={styles.goalSelector}>

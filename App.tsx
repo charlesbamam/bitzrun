@@ -160,12 +160,12 @@ export default function App() {
   // Resetar dados de teste
   const handleResetData = () => {
     Alert.alert(
-      'Resetar dados de teste',
-      'Isso limpará todo o histórico de corridas, conquistas e cartões de memória.',
+      'Limpar dados de teste',
+      'Isso apagará seus registros locais de teste neste aparelho. Seu perfil poderá ser recriado depois.',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
-          text: 'Resetar tudo',
+          text: 'Limpar dados',
           style: 'destructive',
           onPress: async () => {
             await StorageService.clearAll();
@@ -277,7 +277,7 @@ export default function App() {
           />
         );
       case 'achievements':
-        return <AchievementsScreen unlockedAchievements={achievements} />;
+        return <AchievementsScreen unlockedAchievements={achievements} runs={runs} />;
       case 'journey':
         return (
           <JourneyScreen

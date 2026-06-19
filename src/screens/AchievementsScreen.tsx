@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
 import { Award, Lock, Flame, Calendar, RefreshCw, Zap, Activity, Trophy, Smile, Check } from 'lucide-react-native';
-import { Achievement, formatFriendlyDate } from '../services/storage';
+import { Achievement, formatFriendlyDate, Run } from '../services/storage';
 import { AchievementCard } from '../components/AchievementCard';
 
 
 interface AchievementsScreenProps {
   unlockedAchievements: Achievement[];
+  runs: Run[];
 }
 
 interface AchievementDefinition {
@@ -85,7 +86,7 @@ const ALL_ACHIEVEMENTS: AchievementDefinition[] = [
   },
 ];
 
-export const AchievementsScreen: React.FC<AchievementsScreenProps> = ({ unlockedAchievements }) => {
+export const AchievementsScreen: React.FC<AchievementsScreenProps> = ({ unlockedAchievements, runs }) => {
   const [activeTab, setActiveTab] = useState<'all' | 'consistency' | 'evolution'>('all');
 
   const renderIcon = (iconName: string, isUnlocked: boolean) => {
@@ -114,6 +115,56 @@ export const AchievementsScreen: React.FC<AchievementsScreenProps> = ({ unlocked
     }
   };
 
+  const getAchievementProgress = (id: string): string | undefined => {
+    const totalRuns = runs.length;
+    const now = new Date();
+
+    switch (id) {
+      case 'ach_week_active': {
+        const runsLast7Days = runs.filter(r => {
+          const diff = (now.getTime() - new Date(r.date).getTime()) / (1000 * 60 * 60 * 24);
+          return diff <= 7;
+        }).length;
+        return `${runsLast7Days}/2 corridas na semana`;
+      }
+      case 'ach_runs_10': {
+        return `${totalRuns}/10 corridas`;
+      }
+      case 'ach_runs_50': {
+        return `${totalRuns}/50 corridas`;
+      }
+      case 'ach_first_return': {
+        return 'Continue correndo para desbloquear';
+      }
+      case 'ach_3_months': {
+        if (totalRuns === 0) return '0/90 dias ativos';
+        const firstRunDate = new Date(runs[runs.length - 1].date);
+        const diffDays = Math.ceil((now.getTime() - firstRunDate.getTime()) / (1000 * 60 * 60 * 24));
+        const currentDays = Math.min(diffDays, 90);
+        return `${currentDays}/90 dias ativos`;
+      }
+      case 'ach_dist_3': {
+        const maxDist = totalRuns > 0 ? Math.max(...runs.map(r => r.distance)) : 0;
+        return `${maxDist.toFixed(1).replace('.', ',')}/3 km`;
+      }
+      case 'ach_dist_5': {
+        const maxDist = totalRuns > 0 ? Math.max(...runs.map(r => r.distance)) : 0;
+        return `${maxDist.toFixed(1).replace('.', ',')}/5 km`;
+      }
+      case 'ach_dist_10': {
+        const maxDist = totalRuns > 0 ? Math.max(...runs.map(r => r.distance)) : 0;
+        return `${maxDist.toFixed(1).replace('.', ',')}/10 km`;
+      }
+      case 'ach_mood_boost': {
+        const last10 = runs.slice(0, 10);
+        const improvements = last10.filter(r => r.moodAfter > r.moodBefore).length;
+        return `${improvements}/8 melhoras`;
+      }
+      default:
+        return undefined;
+    }
+  };
+
   const filteredDefinitions = ALL_ACHIEVEMENTS.filter(def => {
     if (activeTab === 'all') return true;
     return def.type === activeTab;
@@ -133,8 +184,8 @@ export const AchievementsScreen: React.FC<AchievementsScreenProps> = ({ unlocked
         {/* Barra de Progresso */}
         <View style={styles.progressContainer}>
           <View style={styles.progressTextRow}>
-            <Text style={styles.progressLabel}>Progresso Geral</Text>
-            <Text style={styles.progressValue}>{unlockedCount}/{totalCount} ({percentageUnlocked}%)</Text>
+            <Text style={styles.progressLabel}>{unlockedCount} de {totalCount} conquistas desbloqueadas</Text>
+            <Text style={styles.progressValue}>{percentageUnlocked}%</Text>
           </View>
           <View style={styles.progressBarBackground}>
             <View style={[styles.progressBarFill, { width: `${percentageUnlocked}%` }]} />
@@ -210,6 +261,7 @@ export const AchievementsScreen: React.FC<AchievementsScreenProps> = ({ unlocked
                   isUnlocked={isUnlocked}
                   icon={renderIcon(def.iconName, isUnlocked)}
                   unlockedDate={unlockInfo?.date}
+                  progressText={getAchievementProgress(def.id)}
                 />
               </View>
             </View>

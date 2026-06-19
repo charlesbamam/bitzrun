@@ -104,6 +104,8 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
     }
   };
 
+  const hasEnoughHistory = runsLast30.length > 0 && runsPrior.length > 0;
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
       <Text style={styles.title}>Minha Jornada</Text>
@@ -114,33 +116,41 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
         <Text style={styles.cardTitle}>Antes x Agora</Text>
         <Text style={styles.cardSubtitle}>Comparação dos últimos 30 dias com o mês anterior</Text>
         
-        <View style={styles.comparisonGrid}>
-          <View style={styles.comparisonCol}>
-            <Text style={styles.gridHeader}>Métrica</Text>
-            <Text style={styles.gridRowLabel}>Distância Máxima</Text>
-            <Text style={styles.gridRowLabel}>Humor Médio</Text>
-          </View>
-          
-          <View style={styles.comparisonCol}>
-            <Text style={styles.gridHeader}>Antes</Text>
-            <Text style={styles.gridValue}>
-              {maxDistPrior > 0 ? `${maxDistPrior.toFixed(1).replace('.', ',')} km` : '—'}
-            </Text>
-            <Text style={styles.gridValue}>
-              {avgMoodPrior > 0 ? getMoodEmoji(avgMoodPrior) : '—'}
+        {!hasEnoughHistory ? (
+          <View style={styles.emptyComparisonContainer}>
+            <Text style={styles.emptyComparisonText}>
+              A comparação aparece quando houver mais histórico. {"\n"}Continue registrando corridas para comparar sua evolução.
             </Text>
           </View>
+        ) : (
+          <View style={styles.comparisonGrid}>
+            <View style={styles.comparisonCol}>
+              <Text style={styles.gridHeader}>Métrica</Text>
+              <Text style={styles.gridRowLabel}>Distância Máxima</Text>
+              <Text style={styles.gridRowLabel}>Humor Médio</Text>
+            </View>
+            
+            <View style={styles.comparisonCol}>
+              <Text style={styles.gridHeader}>Antes</Text>
+              <Text style={styles.gridValue}>
+                {maxDistPrior > 0 ? `${maxDistPrior.toFixed(1).replace('.', ',')} km` : '—'}
+              </Text>
+              <Text style={styles.gridValue}>
+                {avgMoodPrior > 0 ? getMoodEmoji(avgMoodPrior) : '—'}
+              </Text>
+            </View>
 
-          <View style={styles.comparisonCol}>
-            <Text style={[styles.gridHeader, { color: '#CCFF00' }]}>Agora</Text>
-            <Text style={[styles.gridValue, { color: '#FFFFFF', fontWeight: '900' }]}>
-              {maxDistNow > 0 ? `${maxDistNow.toFixed(1).replace('.', ',')} km` : '—'}
-            </Text>
-            <Text style={[styles.gridValue, { fontSize: 20 }]}>
-              {avgMoodNow > 0 ? getMoodEmoji(avgMoodNow) : '—'}
-            </Text>
+            <View style={styles.comparisonCol}>
+              <Text style={[styles.gridHeader, { color: '#CCFF00' }]}>Agora</Text>
+              <Text style={[styles.gridValue, { color: '#FFFFFF', fontWeight: '900' }]}>
+                {maxDistNow > 0 ? `${maxDistNow.toFixed(1).replace('.', ',')} km` : '—'}
+              </Text>
+              <Text style={[styles.gridValue, { fontSize: 20 }]}>
+                {avgMoodNow > 0 ? getMoodEmoji(avgMoodNow) : '—'}
+              </Text>
+            </View>
           </View>
-        </View>
+        )}
       </View>
 
       {/* Gráfico Simples de Frequência Semanal */}
@@ -148,7 +158,14 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
         <Text style={styles.cardTitle}>Frequência Semanal</Text>
         <Text style={styles.cardSubtitle}>Presença nas últimas 4 semanas (mais recente à esquerda)</Text>
         
-        <View style={styles.chartContainer}>
+        {runs.length === 0 ? (
+          <View style={styles.emptyChartContainer}>
+            <Text style={styles.emptyChartText}>
+              A frequência aparecerá assim que você registrar sua primeira corrida.
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.chartContainer}>
           <BarChart
             data={barData}
             barWidth={24}
@@ -168,6 +185,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
             stepValue={Math.ceil((maxRunsInAWeek > 0 ? maxRunsInAWeek : 4) / 3)}
           />
         </View>
+        )}
       </View>
 
       {/* Seção O que mudou em você */}
@@ -208,7 +226,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
         {memoryCards.length === 0 ? (
           <View style={styles.emptyMemoryCard}>
             <Text style={styles.emptyMemoryText}>
-              Seus momentos mais marcantes e conquistas de regularidade serão transformados em cartões de memória aqui.
+              Seus momentos marcantes aparecerão aqui conforme você registra corridas.
             </Text>
           </View>
         ) : (
@@ -432,5 +450,29 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginRight: 8,
     fontFamily: 'System',
+  },
+  emptyComparisonContainer: {
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyComparisonText: {
+    color: '#A0A0A0',
+    fontSize: 13,
+    lineHeight: 20,
+    textAlign: 'center',
+    fontWeight: '300',
+  },
+  emptyChartContainer: {
+    paddingVertical: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyChartText: {
+    color: '#A0A0A0',
+    fontSize: 13,
+    lineHeight: 20,
+    textAlign: 'center',
+    fontWeight: '300',
   },
 });

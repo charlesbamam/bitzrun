@@ -11,6 +11,7 @@ interface AchievementCardProps {
   isUnlocked: boolean;
   icon?: React.ReactNode;
   unlockedDate?: string;
+  progressText?: string;
 }
 
 export const AchievementCard: React.FC<AchievementCardProps> = ({
@@ -19,6 +20,7 @@ export const AchievementCard: React.FC<AchievementCardProps> = ({
   isUnlocked,
   icon,
   unlockedDate,
+  progressText,
 }) => {
   return (
     <AppCard
@@ -60,6 +62,11 @@ export const AchievementCard: React.FC<AchievementCardProps> = ({
           {isUnlocked && unlockedDate && (
             <Text style={styles.date}>
               Conquistado em {formatFriendlyDate(unlockedDate)}
+            </Text>
+          )}
+          {!isUnlocked && progressText && (
+            <Text style={styles.progressText}>
+              Progresso: {progressText}
             </Text>
           )}
         </View>
@@ -132,6 +139,12 @@ const styles = StyleSheet.create({
   },
   date: {
     color: theme.colors.primary,
+    fontSize: 10,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  progressText: {
+    color: '#8E8E93',
     fontSize: 10,
     fontWeight: '600',
     marginTop: 4,
