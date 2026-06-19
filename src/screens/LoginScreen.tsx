@@ -52,7 +52,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess, onNavigateT
 
         {/* Headline & Subtitle */}
         <View style={styles.welcomeSection}>
-          <Text style={styles.headline}>Comece pequeno.{"\n"}Continue correndo.</Text>
+          <Text style={styles.headline}>Aos poucos,{"\n"}toda corrida conta.</Text>
           <Text style={styles.subtitle}>
             Bitzrun ajuda você a criar o hábito de correr sem pressão, uma corrida curta de cada vez.
           </Text>
