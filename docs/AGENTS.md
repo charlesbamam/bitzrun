@@ -103,7 +103,7 @@ Evitar:
 - encerrar corrida
 - gerar distância simulada ou manual
 - registrar humor depois da corrida
-- adicionar nota corta
+- adicionar nota curta
 - salvar registro local
 - atualizar estatísticas
 - mostrar conquistas básicas
