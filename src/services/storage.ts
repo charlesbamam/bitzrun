@@ -31,6 +31,7 @@ export interface UserProfile {
   consistencyScore: number; // 0 a 100
   streak: number; // sequência atual de corridas seguidas
   lastRunDate?: string;
+  avatarUri?: string;
 }
 
 const KEYS = {
@@ -159,6 +160,13 @@ export const StorageService = {
   async updateProfileName(name: string): Promise<UserProfile> {
     const profile = await this.getProfile();
     profile.name = name;
+    await AsyncStorage.setItem(KEYS.PROFILE, JSON.stringify(profile));
+    return profile;
+  },
+
+  async updateProfileAvatar(avatarUri: string): Promise<UserProfile> {
+    const profile = await this.getProfile();
+    profile.avatarUri = avatarUri;
     await AsyncStorage.setItem(KEYS.PROFILE, JSON.stringify(profile));
     return profile;
   },

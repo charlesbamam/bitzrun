@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
 import { Award, Lock, Flame, Calendar, RefreshCw, Zap, Activity, Trophy, Smile, Check } from 'lucide-react-native';
 import { Achievement, formatFriendlyDate } from '../services/storage';
+import { AchievementCard } from '../components/AchievementCard';
+
 
 interface AchievementsScreenProps {
   unlockedAchievements: Achievement[];
@@ -201,28 +203,14 @@ export const AchievementsScreen: React.FC<AchievementsScreenProps> = ({ unlocked
               </View>
 
               {/* Card da Conquista */}
-              <View style={[styles.card, isUnlocked ? styles.cardUnlocked : styles.cardLocked]}>
-                <View style={styles.cardHeader}>
-                  <View style={[
-                    styles.iconCircle,
-                    isUnlocked ? styles.iconCircleUnlocked : styles.iconCircleLocked
-                  ]}>
-                    {renderIcon(def.iconName, isUnlocked)}
-                  </View>
-                  <View style={styles.cardTitleContainer}>
-                    <Text style={[styles.cardTitle, !isUnlocked && styles.cardTitleLocked]}>
-                      {def.title}
-                    </Text>
-                    {isUnlocked && unlockInfo && (
-                      <Text style={styles.unlockDate}>
-                        Desbloqueado em {formatFriendlyDate(unlockInfo.date)}
-                      </Text>
-                    )}
-                  </View>
-                </View>
-                <Text style={[styles.cardDescription, !isUnlocked && styles.cardDescriptionLocked]}>
-                  {def.description}
-                </Text>
+              <View style={{ flex: 1 }}>
+                <AchievementCard
+                  title={def.title}
+                  description={def.description}
+                  isUnlocked={isUnlocked}
+                  icon={renderIcon(def.iconName, isUnlocked)}
+                  unlockedDate={unlockInfo?.date}
+                />
               </View>
             </View>
           );

@@ -26,7 +26,9 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
   
   // Dados de preparação
   const [moodBefore, setMoodBefore] = useState<number>(3); // 1 a 5, default 3 (Regular)
-  const [goal, setGoal] = useState<string>('');
+  const [selectedGoalOption, setSelectedGoalOption] = useState<string>('1 km');
+  const [customGoalText, setCustomGoalText] = useState<string>('');
+  const [targetKm, setTargetKm] = useState<number>(1.0);
 
   // Dados de corrida
   const [seconds, setSeconds] = useState<number>(0);
@@ -156,6 +158,33 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
   }, [status]);
 
   const handleStart = () => {
+    let parsedKm = 1.0;
+
+    if (selectedGoalOption === '0,5 km') {
+      parsedKm = 0.5;
+    } else if (selectedGoalOption === '1 km') {
+      parsedKm = 1.0;
+    } else if (selectedGoalOption === '2 km') {
+      parsedKm = 2.0;
+    } else if (selectedGoalOption === '3 km') {
+      parsedKm = 3.0;
+    } else if (selectedGoalOption === '5 km') {
+      parsedKm = 5.0;
+    } else if (selectedGoalOption === 'Personalizada') {
+      const cleanInput = customGoalText.replace(',', '.').trim();
+      const parsedValue = parseFloat(cleanInput);
+      
+      if (isNaN(parsedValue) || parsedValue <= 0 || parsedValue > 50) {
+        Alert.alert(
+          'Distância Inválida',
+          'Por favor, insira uma distância decimal maior que 0 e de no máximo 50 km.'
+        );
+        return;
+      }
+      parsedKm = parsedValue;
+    }
+
+    setTargetKm(parsedKm);
     setStatus('running');
     setSeconds(0);
     setDistance(0);
@@ -178,13 +207,19 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
       return;
     }
 
-    onFinishRun(seconds, parseFloat(distance.toFixed(2)), moodBefore, goal.trim());
+    const goalLabel = `${targetKm.toFixed(1).replace('.', ',')} km`;
+    onFinishRun(seconds, parseFloat(distance.toFixed(2)), moodBefore, goalLabel);
   };
 
   const formatTime = (totalSecs: number) => {
     const mins = Math.floor(totalSecs / 60);
     const secs = totalSecs % 60;
     return `${pad(mins)}:${pad(secs)}`;
+  };
+
+  const getProgressRatio = () => {
+    if (targetKm <= 0) return 0;
+    return Math.min(distance / targetKm, 1);
   };
 
   if (status === 'setup') {
@@ -199,47 +234,54 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
           </AppCard>
 
           <AppCard style={styles.setupCard}>
-            <Text style={styles.label}>Meta de hoje</Text>
+            <Text style={styles.questionText}>Qual pequena distância você quer cumprir hoje?</Text>
+            <Text style={styles.metaTipText}>
+              Você escolhe uma distância-alvo. Nesta versão de teste, o app simula o avanço para validar o hábito e o fluxo.
+            </Text>
+
             <View style={styles.quickGoalsRow}>
-              {['5 min', '10 min', '15 min', '20 min', 'Livre'].map((quickGoal) => {
-                const isSelected = goal === quickGoal;
+              {['0,5 km', '1 km', '2 km', '3 km', '5 km', 'Personalizada'].map((option) => {
+                const isSelected = selectedGoalOption === option;
                 return (
                   <TouchableOpacity
-                    key={quickGoal}
+                    key={option}
                     style={[
                       styles.quickGoalCard,
                       isSelected && styles.quickGoalCardSelected
                     ]}
-                    onPress={() => setGoal(quickGoal)}
+                    onPress={() => setSelectedGoalOption(option)}
                     activeOpacity={0.7}
                   >
                     <Text style={[
                       styles.quickGoalText,
                       isSelected && styles.quickGoalTextSelected
                     ]}>
-                      {quickGoal}
+                      {option}
                     </Text>
                   </TouchableOpacity>
                 );
               })}
             </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.subLabel}>Ou defina outra meta (opcional)</Text>
-              <TextInput
-                style={styles.customInput}
-                placeholder="Ex: 5 km ou 30 minutos"
-                placeholderTextColor="#666666"
-                value={goal}
-                onChangeText={setGoal}
-                maxLength={40}
-                autoCorrect={false}
-              />
-            </View>
+            {selectedGoalOption === 'Personalizada' && (
+              <View style={styles.inputContainer}>
+                <Text style={styles.subLabel}>Defina a distância em km</Text>
+                <TextInput
+                  style={styles.customInput}
+                  placeholder="Ex: 1,5 ou 4.2"
+                  placeholderTextColor="#666666"
+                  keyboardType="numeric"
+                  value={customGoalText}
+                  onChangeText={setCustomGoalText}
+                  maxLength={6}
+                  autoCorrect={false}
+                />
+              </View>
+            )}
           </AppCard>
 
           <Text style={styles.motivationText}>
-            Você não precisa fazer muito. Só precisa começar.
+            Escolha uma meta leve. O objetivo é manter o hábito vivo.
           </Text>
 
           <AppButton
@@ -252,6 +294,8 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
       </ScreenContainer>
     );
   }
+
+  const progressRatio = getProgressRatio();
 
   // Tela de Corrida Ativa (Running / Paused)
   return (
@@ -294,25 +338,46 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
         <Text style={styles.timerLabel}>Tempo acumulado</Text>
 
         <View style={styles.distanceBlock}>
-          <Text style={styles.distanceValue}>{distance.toFixed(2).replace('.', ',')}</Text>
-          <Text style={styles.distanceLabel}>Km simulados</Text>
+          <Text style={styles.distanceValue}>{distance.toFixed(2).replace('.', ',')} km</Text>
+          <Text style={styles.distanceLabel}>Distância simulada</Text>
+        </View>
+
+        {/* Barra de Progresso e Meta */}
+        <View style={styles.progressContainer}>
+          <View style={styles.progressHeader}>
+            <Text style={styles.progressLabel}>Progresso da Meta</Text>
+            <Text style={styles.progressMetaValue}>
+              Meta: {targetKm.toFixed(1).replace('.', ',')} km
+            </Text>
+          </View>
+          <View style={styles.progressBarBg}>
+            <View style={[styles.progressBarFill, { width: `${progressRatio * 100}%` }]} />
+          </View>
+          <Text style={styles.simulationText}>Simulação de treino ativa localmente</Text>
         </View>
       </View>
 
       {/* Rodapé com Ações */}
       <View style={styles.activeFooter}>
         <View style={styles.activeActionsRow}>
-          <TouchableOpacity
-            style={[styles.actionRoundButton, styles.pauseButton]}
-            onPress={handlePauseToggle}
-            activeOpacity={0.8}
-          >
-            {status === 'running' ? (
+          {status === 'running' ? (
+            <TouchableOpacity
+              style={[styles.actionRoundButton, styles.pauseButton]}
+              onPress={handlePauseToggle}
+              activeOpacity={0.8}
+            >
               <Pause size={24} color={theme.colors.text} />
-            ) : (
-              <Play size={24} color={theme.colors.background} />
-            )}
-          </TouchableOpacity>
+            </TouchableOpacity>
+          ) : (
+            // Alto contraste para o botão Play/Continuar quando pausado (Verde-limão)
+            <TouchableOpacity
+              style={[styles.actionRoundButton, styles.playButtonActive]}
+              onPress={handlePauseToggle}
+              activeOpacity={0.8}
+            >
+              <Play size={24} color={theme.colors.background} fill={theme.colors.background} />
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             style={[styles.actionRoundButton, styles.stopButton]}
@@ -369,6 +434,12 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     fontSize: 15,
     fontWeight: 'bold',
+    marginBottom: theme.spacing.xs,
+  },
+  metaTipText: {
+    color: theme.colors.textSecondary,
+    fontSize: 11,
+    lineHeight: 16,
     marginBottom: theme.spacing.md,
   },
   label: {
@@ -492,7 +563,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
-    gap: theme.spacing.xl,
+    gap: theme.spacing.lg,
   },
   timerValue: {
     color: theme.colors.text,
@@ -509,18 +580,57 @@ const styles = StyleSheet.create({
   },
   distanceBlock: {
     alignItems: 'center',
-    marginTop: theme.spacing.md,
+    marginVertical: theme.spacing.sm,
   },
   distanceValue: {
-    color: theme.colors.primary,
-    fontSize: 36,
+    color: theme.colors.text,
+    fontSize: 32,
     fontWeight: 'bold',
   },
   distanceLabel: {
     color: theme.colors.textSecondary,
-    fontSize: 12,
+    fontSize: 11,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  progressContainer: {
+    width: '100%',
+    paddingHorizontal: theme.spacing.lg,
+    marginTop: theme.spacing.md,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  progressLabel: {
+    color: theme.colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  progressMetaValue: {
+    color: theme.colors.primary,
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  progressBarBg: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: theme.colors.border,
+    width: '100%',
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: theme.colors.primary,
+    borderRadius: 4,
+  },
+  simulationText: {
+    color: theme.colors.textSecondary,
+    fontSize: 9,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 8,
   },
   activeFooter: {
     width: '100%',
@@ -542,6 +652,10 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.card,
     borderWidth: 1.5,
     borderColor: theme.colors.border,
+  },
+  playButtonActive: {
+    backgroundColor: theme.colors.primary,
+    ...theme.shadows.medium,
   },
   stopButton: {
     backgroundColor: theme.colors.card,
@@ -607,4 +721,4 @@ const styles = StyleSheet.create({
 });
 
 const pad = (val: number) => val.toString().padStart(2, '0');
-
+export default StartRunScreen;

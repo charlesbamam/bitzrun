@@ -308,7 +308,13 @@ export default function App() {
 
       {/* Barra de Navegação Inferior */}
       {showTabBar && (
-        <BottomTabs activeTab={activeTab} onTabPress={setActiveTab} />
+        <BottomTabs
+          activeTab={activeTab}
+          activeFlow={activeFlow}
+          onTabPress={setActiveTab}
+          onStartRunPress={handleStartRunFlow}
+          onProfilePress={() => setActiveFlow('profile')}
+        />
       )}
     </View>
   );

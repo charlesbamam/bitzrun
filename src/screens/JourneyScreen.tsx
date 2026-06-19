@@ -228,7 +228,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
         <View style={styles.closingSection}>
           <Text style={styles.closingText}>{getClosingText()}</Text>
           <TouchableOpacity style={styles.shareAllBtn} onPress={onShareAll} activeOpacity={0.85}>
-            <Text style={styles.shareAllBtnText}>COMPARTILHAR MINHA EVOLUÇÃO</Text>
+            <Text style={styles.shareAllBtnText}>COMPARTILHAR EVOLUÇÃO</Text>
             <ArrowUpRight size={18} color="#000000" strokeWidth={2.5} />
           </TouchableOpacity>
         </View>
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
   shareCardBtn: {
     padding: 8,
     backgroundColor: '#000000', // Fundo preto puro para contraste
-    borderRadius: 12,
+    borderRadius: 16, // Alterado para 16px
     borderWidth: 1,
     borderColor: '#262626',
   },
@@ -417,8 +417,8 @@ const styles = StyleSheet.create({
   },
   shareAllBtn: {
     backgroundColor: '#CCFF00', // Verde-limão
-    borderRadius: 28,
-    paddingVertical: 18,
+    borderRadius: 16, // Alterado para 16px conforme padrão do design system
+    paddingVertical: 14,
     paddingHorizontal: 24,
     flexDirection: 'row',
     alignItems: 'center',
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
   },
   shareAllBtnText: {
     color: '#000000', // Texto preto puro
-    fontSize: 14,
+    fontSize: 12, // Reduzido de 14 para 12 para evitar quebras feias
     fontWeight: '900', // Roboto Black
     letterSpacing: 1,
     marginRight: 8,

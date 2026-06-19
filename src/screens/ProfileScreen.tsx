@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native';
-import { ChevronLeft, LogOut, User, Activity, Clock, ShieldAlert, Award, Calendar, Flame } from 'lucide-react-native';
-import { UserProfile, Run } from '../services/storage';
+import { StyleSheet, Text, View, TouchableOpacity, TextInput, ScrollView, Alert, Image } from 'react-native';
+import { ChevronLeft, LogOut, User, Activity, Clock, Award, Flame } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { UserProfile, Run, StorageService } from '../services/storage';
+import { theme } from '../theme/theme';
+import { ScreenContainer } from '../components/ScreenContainer';
+import { AppCard } from '../components/AppCard';
+import { AppButton } from '../components/AppButton';
 
 interface ProfileScreenProps {
   profile: UserProfile;
@@ -45,35 +50,70 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) {
       Alert.alert('Erro', 'O nome não pode estar em branco.');
       return;
     }
-    onProfileUpdate({
-      ...profile,
-      name: name.trim()
-    });
+    const updated = await StorageService.updateProfileName(name.trim());
+    onProfileUpdate(updated);
     setIsEditing(false);
   };
 
+  const handleSelectImage = async () => {
+    try {
+      // Solicitar permissão da galeria de forma amigável
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permissão necessária',
+          'Precisamos da permissão para acessar a galeria de fotos para alterar sua foto de perfil.'
+        );
+        return;
+      }
+
+      // Abrir o seletor de imagens
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const uri = result.assets[0].uri;
+        const updated = await StorageService.updateProfileAvatar(uri);
+        onProfileUpdate(updated);
+      }
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível carregar a imagem selecionada.');
+    }
+  };
+
   return (
-    <View style={styles.container}>
+    <ScreenContainer scrollable>
       {/* Cabeçalho */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <ChevronLeft size={24} color="#FFFFFF" />
+          <ChevronLeft size={24} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Meu Perfil</Text>
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+      <View style={styles.contentContainer}>
         {/* Info do Usuário */}
         <View style={styles.avatarSection}>
-          <View style={styles.avatarCircle}>
-            <User size={48} color="#CCFF00" strokeWidth={1.5} />
-          </View>
+          <TouchableOpacity style={styles.avatarCircle} onPress={handleSelectImage} activeOpacity={0.8}>
+            {profile.avatarUri ? (
+              <Image source={{ uri: profile.avatarUri }} style={styles.avatarImage} />
+            ) : (
+              <User size={40} color={theme.colors.primary} strokeWidth={1.5} />
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleSelectImage} activeOpacity={0.7} style={styles.avatarLink}>
+            <Text style={styles.avatarLinkText}>Alterar foto</Text>
+          </TouchableOpacity>
 
           {isEditing ? (
             <View style={styles.editNameWrapper}>
@@ -101,7 +141,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
           <View style={styles.badgeRow}>
             <View style={styles.streakBadge}>
-              <Flame size={14} color="#000000" strokeWidth={2} />
+              <Flame size={14} color={theme.colors.background} strokeWidth={2.5} />
               <Text style={styles.streakText}>{profile.streak} dias de ofensiva</Text>
             </View>
           </View>
@@ -110,36 +150,36 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         {/* Estatísticas Acumuladas */}
         <Text style={styles.sectionTitle}>Estatísticas Gerais</Text>
         <View style={styles.statsGrid}>
-          <View style={styles.statCard}>
-            <Activity size={20} color="#CCFF00" strokeWidth={1.5} style={styles.statIcon} />
+          <AppCard style={styles.statCard}>
+            <Activity size={20} color={theme.colors.primary} strokeWidth={1.5} style={styles.statIcon} />
             <Text style={styles.statVal}>{totalDistance.toFixed(1).replace('.', ',')} km</Text>
             <Text style={styles.statLbl}>Distância Total</Text>
-          </View>
+          </AppCard>
 
-          <View style={styles.statCard}>
-            <Clock size={20} color="#CCFF00" strokeWidth={1.5} style={styles.statIcon} />
+          <AppCard style={styles.statCard}>
+            <Clock size={20} color={theme.colors.primary} strokeWidth={1.5} style={styles.statIcon} />
             <Text style={styles.statVal}>{formatTotalTime(totalDurationSeconds)}</Text>
             <Text style={styles.statLbl}>Tempo Total</Text>
-          </View>
+          </AppCard>
 
-          <View style={styles.statCard}>
-            <Award size={20} color="#CCFF00" strokeWidth={1.5} style={styles.statIcon} />
+          <AppCard style={styles.statCard}>
+            <Award size={20} color={theme.colors.primary} strokeWidth={1.5} style={styles.statIcon} />
             <Text style={styles.statVal}>{totalRuns}</Text>
             <Text style={styles.statLbl}>Corridas Feitas</Text>
-          </View>
+          </AppCard>
 
-          <View style={styles.statCard}>
-            <Flame size={20} color="#CCFF00" strokeWidth={1.5} style={styles.statIcon} />
+          <AppCard style={styles.statCard}>
+            <Flame size={20} color={theme.colors.primary} strokeWidth={1.5} style={styles.statIcon} />
             <Text style={styles.statVal}>{getAveragePace()} /km</Text>
             <Text style={styles.statLbl}>Pace Médio</Text>
-          </View>
+          </AppCard>
         </View>
 
         {/* Metas Semanais */}
         <Text style={styles.sectionTitle}>Configurações de Metas</Text>
-        <View style={styles.card}>
+        <AppCard style={styles.card}>
           <View style={styles.goalRow}>
-            <View>
+            <View style={styles.goalTextContainer}>
               <Text style={styles.cardItemTitle}>Meta de Treinos Semanal</Text>
               <Text style={styles.cardItemDesc}>Corridas planejadas por semana</Text>
             </View>
@@ -173,114 +213,122 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <Text style={styles.scoreText}>{profile.consistencyScore}%</Text>
             </View>
           </View>
-        </View>
+        </AppCard>
 
-        {/* Botão de Logout */}
-        <TouchableOpacity style={styles.logoutButton} onPress={onSignOut} activeOpacity={0.85}>
-          <LogOut size={18} color="#FF4444" strokeWidth={2} style={{ marginRight: 8 }} />
-          <Text style={styles.logoutText}>SAIR DA CONTA</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </View>
+        {/* Botão de Sair da Conta */}
+        <AppButton
+          title="SAIR DA CONTA"
+          onPress={onSignOut}
+          variant="outline"
+          style={styles.logoutButton}
+          textStyle={styles.logoutText}
+        />
+      </View>
+    </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000000',
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 50,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingVertical: theme.spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E1E1E',
+    borderBottomColor: theme.colors.border,
   },
   backButton: {
     padding: 8,
-    backgroundColor: '#1E1E1E',
-    borderRadius: 16,
   },
   headerTitle: {
-    color: '#FFFFFF',
+    color: theme.colors.text,
     fontSize: 18,
-    fontWeight: '900',
-    fontFamily: 'System',
+    fontWeight: 'bold',
   },
   headerSpacer: {
     width: 40,
   },
   contentContainer: {
-    padding: 24,
-    paddingBottom: 40,
+    paddingTop: theme.spacing.md,
+    paddingBottom: theme.spacing.xxl,
   },
   avatarSection: {
     alignItems: 'center',
-    marginBottom: 36,
+    marginBottom: theme.spacing.xl,
   },
   avatarCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#1E1E1E',
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: theme.colors.card,
     borderWidth: 1.5,
-    borderColor: '#262626',
+    borderColor: theme.colors.border,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarLink: {
+    marginTop: theme.spacing.xs,
+    paddingVertical: theme.spacing.xs,
+  },
+  avatarLinkText: {
+    color: theme.colors.primary,
+    fontSize: 12,
+    fontWeight: '700',
   },
   nameWrapper: {
     alignItems: 'center',
+    marginTop: theme.spacing.sm,
   },
   userName: {
-    color: '#FFFFFF',
+    color: theme.colors.text,
     fontSize: 24,
-    fontWeight: '900',
-    fontFamily: 'System',
+    fontWeight: 'bold',
   },
   editButton: {
     marginTop: 6,
     paddingVertical: 4,
     paddingHorizontal: 12,
-    backgroundColor: '#1E1E1E',
-    borderRadius: 12,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.md,
   },
   editButtonText: {
-    color: '#CCFF00',
+    color: theme.colors.primary,
     fontSize: 12,
     fontWeight: '700',
   },
   editNameWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E1E1E',
-    borderRadius: 16,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.md,
     paddingHorizontal: 12,
     width: '100%',
     height: 52,
     borderWidth: 1,
-    borderColor: '#CCFF00',
+    borderColor: theme.colors.primary,
+    marginTop: theme.spacing.sm,
   },
   nameInput: {
     flex: 1,
-    color: '#FFFFFF',
+    color: theme.colors.text,
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: 'bold',
   },
   saveNameBtn: {
-    backgroundColor: '#CCFF00',
+    backgroundColor: theme.colors.primary,
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 10,
+    borderRadius: theme.borderRadius.sm,
   },
   saveBtnText: {
-    color: '#000000',
+    color: theme.colors.background,
     fontSize: 12,
-    fontWeight: '900',
+    fontWeight: 'bold',
   },
   badgeRow: {
     marginTop: 12,
@@ -288,135 +336,121 @@ const styles = StyleSheet.create({
   streakBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#CCFF00',
+    backgroundColor: theme.colors.primary,
     paddingVertical: 4,
     paddingHorizontal: 10,
-    borderRadius: 10,
+    borderRadius: theme.borderRadius.sm,
   },
   streakText: {
-    color: '#000000',
+    color: theme.colors.background,
     fontSize: 11,
-    fontWeight: '900',
+    fontWeight: 'bold',
     marginLeft: 4,
   },
   sectionTitle: {
-    color: '#CCFF00',
-    fontSize: 12,
-    fontWeight: '900',
+    color: theme.colors.primary,
+    fontSize: 11,
+    fontWeight: 'bold',
     textTransform: 'uppercase',
     letterSpacing: 1,
-    marginBottom: 16,
-    marginTop: 12,
+    marginBottom: theme.spacing.md,
+    marginTop: theme.spacing.lg,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: 24,
+    marginBottom: theme.spacing.sm,
   },
   statCard: {
     width: '48%',
-    backgroundColor: '#1E1E1E',
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#262626',
+    marginBottom: theme.spacing.md,
+    padding: theme.spacing.md,
   },
   statIcon: {
     marginBottom: 8,
   },
   statVal: {
-    color: '#FFFFFF',
+    color: theme.colors.text,
     fontSize: 18,
-    fontWeight: '900',
+    fontWeight: 'bold',
   },
   statLbl: {
-    color: '#A0A0A0',
-    fontSize: 12,
-    fontWeight: '300',
+    color: theme.colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '500',
     marginTop: 2,
   },
   card: {
-    backgroundColor: '#1E1E1E',
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#262626',
-    marginBottom: 28,
+    marginBottom: theme.spacing.lg,
+    padding: theme.spacing.lg,
   },
   goalRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  goalTextContainer: {
+    flex: 1,
+    marginRight: theme.spacing.sm,
+  },
   cardItemTitle: {
-    color: '#FFFFFF',
+    color: theme.colors.text,
     fontSize: 14,
-    fontWeight: '900',
+    fontWeight: 'bold',
   },
   cardItemDesc: {
-    color: '#A0A0A0',
+    color: theme.colors.textSecondary,
     fontSize: 12,
-    fontWeight: '300',
+    fontWeight: '500',
     marginTop: 2,
   },
   goalSelector: {
     flexDirection: 'row',
-    backgroundColor: '#000000',
-    borderRadius: 12,
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.md,
     padding: 4,
   },
   goalNumBtn: {
     width: 28,
     height: 28,
-    borderRadius: 8,
+    borderRadius: theme.borderRadius.sm,
     justifyContent: 'center',
     alignItems: 'center',
     marginHorizontal: 2,
   },
   goalNumBtnActive: {
-    backgroundColor: '#CCFF00',
+    backgroundColor: theme.colors.primary,
   },
   goalNumText: {
-    color: '#A0A0A0',
+    color: theme.colors.textSecondary,
     fontSize: 12,
-    fontWeight: '900',
+    fontWeight: 'bold',
   },
   goalNumTextActive: {
-    color: '#000000',
+    color: theme.colors.background,
   },
   divider: {
     height: 1,
-    backgroundColor: '#262626',
-    marginVertical: 16,
+    backgroundColor: theme.colors.border,
+    marginVertical: theme.spacing.md,
   },
   scoreIndicator: {
     backgroundColor: 'rgba(204, 255, 0, 0.1)',
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 10,
+    borderRadius: theme.borderRadius.sm,
   },
   scoreText: {
-    color: '#CCFF00',
+    color: theme.colors.primary,
     fontSize: 13,
-    fontWeight: '900',
+    fontWeight: 'bold',
   },
   logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#1E1E1E',
-    borderWidth: 1.5,
-    borderColor: '#FF4444',
-    borderRadius: 24,
-    paddingVertical: 14,
-    width: '100%',
+    borderColor: theme.colors.error,
+    marginTop: theme.spacing.md,
   },
   logoutText: {
-    color: '#FF4444',
-    fontSize: 13,
-    fontWeight: '900',
-    letterSpacing: 1,
+    color: theme.colors.error,
   },
 });

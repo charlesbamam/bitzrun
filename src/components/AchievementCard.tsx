@@ -33,7 +33,7 @@ export const AchievementCard: React.FC<AchievementCardProps> = ({
           {isUnlocked && icon ? (
             icon
           ) : (
-            <Lock size={18} color={theme.colors.textMuted} strokeWidth={2} />
+            <Lock size={18} color={theme.colors.textSecondary} strokeWidth={2} />
           )}
         </View>
 
@@ -51,7 +51,12 @@ export const AchievementCard: React.FC<AchievementCardProps> = ({
               </View>
             )}
           </View>
-          <Text style={styles.description}>{description}</Text>
+          <Text style={[
+            styles.description,
+            !isUnlocked && styles.descriptionLocked
+          ]}>
+            {description}
+          </Text>
           {isUnlocked && unlockedDate && (
             <Text style={styles.date}>
               Conquistado em {formatFriendlyDate(unlockedDate)}
@@ -69,8 +74,9 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
   },
   cardLocked: {
-    opacity: 0.5,
     borderStyle: 'dashed',
+    borderColor: theme.colors.border,
+    backgroundColor: '#151517', // Fundo sutilmente mais escuro para o card bloqueado, sem diminuir opacidade
   },
   contentRow: {
     flexDirection: 'row',
@@ -102,12 +108,12 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   title: {
-    color: theme.colors.text,
+    color: '#FFFFFF', // Título sempre branco
     fontSize: 14,
     fontWeight: 'bold',
   },
   titleLocked: {
-    color: theme.colors.textSecondary,
+    color: '#E5E5EA', // Conquistas bloqueadas têm título ligeiramente cinza claro (super legível)
   },
   unlockedBadge: {
     backgroundColor: theme.colors.primary,
@@ -117,9 +123,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   description: {
-    color: theme.colors.textSecondary,
+    color: '#D1D1D6', // Descrição em cinza claro com alto contraste
     fontSize: 12,
     lineHeight: 16,
+  },
+  descriptionLocked: {
+    color: '#8E8E93', // Para bloqueadas, cinza médio ainda com contraste satisfatório
   },
   date: {
     color: theme.colors.primary,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, TextInput, Alert, Image } from 'react-native';
 import { Flame, Check, Edit2, User, Trophy, Calendar, Zap, AlertCircle } from 'lucide-react-native';
 import { StorageService, UserProfile, Run } from '../services/storage';
 import { theme } from '../theme/theme';
@@ -107,7 +107,11 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         </View>
 
         <TouchableOpacity style={styles.avatar} onPress={onSignOut} activeOpacity={0.7}>
-          <User size={20} color={theme.colors.primary} strokeWidth={1.5} />
+          {profile.avatarUri ? (
+            <Image source={{ uri: profile.avatarUri }} style={styles.avatarImage} />
+          ) : (
+            <User size={20} color={theme.colors.primary} strokeWidth={1.5} />
+          )}
         </TouchableOpacity>
       </View>
 
@@ -282,6 +286,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: theme.colors.border,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
   mainCtaCard: {
     padding: theme.spacing.lg,
