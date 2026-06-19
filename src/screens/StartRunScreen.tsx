@@ -17,7 +17,7 @@ export interface RunningNotification {
 
 interface StartRunScreenProps {
   onCancel: () => void;
-  onFinishRun: (durationSeconds: number, distanceKm: number, moodBefore: number, goalText: string) => void;
+  onFinishRun: (durationSeconds: number, distanceKm: number, moodBefore: number, goalText: string, targetDistanceKm: number) => void;
 }
 
 export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFinishRun }) => {
@@ -208,7 +208,7 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
     }
 
     const goalLabel = `${targetKm.toFixed(1).replace('.', ',')} km`;
-    onFinishRun(seconds, parseFloat(distance.toFixed(2)), moodBefore, goalLabel);
+    onFinishRun(seconds, parseFloat(distance.toFixed(2)), moodBefore, goalLabel, targetKm);
   };
 
   const formatTime = (totalSecs: number) => {

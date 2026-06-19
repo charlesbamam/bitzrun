@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
-import { CheckCircle2, ChevronRight, Award, Bookmark } from 'lucide-react-native';
-import { StorageService, Achievement, MemoryCard as MemoryCardType } from '../services/storage';
+import { CheckCircle2, ChevronRight, Award, Bookmark, AlertTriangle } from 'lucide-react-native';
+import { StorageService, Achievement, MemoryCard as MemoryCardType, STOP_REASON_LABELS } from '../services/storage';
 import { theme } from '../theme/theme';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { AppCard } from '../components/AppCard';
@@ -16,24 +16,56 @@ interface MoodFeedbackScreenProps {
   distanceKm: number;
   durationSeconds: number;
   onComplete: (unlockedAchievements: Achievement[], unlockedMemoryCards: MemoryCardType[]) => void;
+  stoppedBeforeGoal?: boolean;
+  stopReasons?: string[];
+  stopNote?: string;
+  targetDistanceKm?: number;
 }
+
+const REASONS_LIST = [
+  'knee_pain', 'back_pain', 'foot_pain', 'shin_pain', 'ankle_pain',
+  'cramps', 'muscle_pain', 'out_of_breath', 'strong_tiredness',
+  'felt_bad', 'dizziness', 'heat', 'no_motivation', 'anxiety',
+  'no_time', 'pace_too_hard', 'goal_too_high', 'distraction', 'other'
+];
 
 export const MoodFeedbackScreen: React.FC<MoodFeedbackScreenProps> = ({
   moodBefore,
   distanceKm,
   durationSeconds,
   onComplete,
+  stoppedBeforeGoal,
+  stopReasons,
+  stopNote,
+  targetDistanceKm,
 }) => {
   const [moodAfter, setMoodAfter] = useState<number>(3); // Default 3 (Regular)
   const [notes, setNotes] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   
+  const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
+  const [localStopNote, setLocalStopNote] = useState<string>('');
+
   const [newAchievements, setNewAchievements] = useState<Achievement[]>([]);
   const [newMemoryCards, setNewMemoryCards] = useState<MemoryCardType[]>([]);
 
+  const toggleReason = (id: string) => {
+    setSelectedReasons(prev =>
+      prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]
+    );
+  };
+
+  const showHealthWarning = selectedReasons.includes('felt_bad') || selectedReasons.includes('dizziness');
+
   const handleSave = async () => {
     setIsLoading(true);
+    
+    // Configurar dados de parada com base em stoppedBeforeGoal
+    const finalStoppedBeforeGoal = !!stoppedBeforeGoal;
+    const finalStopReasons = finalStoppedBeforeGoal ? selectedReasons : [];
+    const finalStopNote = finalStoppedBeforeGoal ? (localStopNote.trim() || undefined) : undefined;
+
     try {
       const result = await StorageService.saveRun({
         distance: distanceKm,
@@ -41,6 +73,10 @@ export const MoodFeedbackScreen: React.FC<MoodFeedbackScreenProps> = ({
         moodBefore: moodBefore,
         moodAfter: moodAfter,
         notes: notes.trim() || undefined,
+        stoppedBeforeGoal: finalStoppedBeforeGoal,
+        stopReasons: finalStopReasons,
+        stopNote: finalStopNote,
+        targetDistanceKm,
       });
 
       setNewAchievements(result.newAchievements);
@@ -130,7 +166,10 @@ export const MoodFeedbackScreen: React.FC<MoodFeedbackScreenProps> = ({
       <View style={styles.formContainer}>
         <AppCard style={styles.formCard}>
           <Text style={styles.questionText}>Como você está se sentindo agora?</Text>
-          <MoodSelector selectedMood={moodAfter} onSelect={setMoodAfter} />
+          <Text style={styles.subTitleText}>Compare com antes da corrida. Isso também é progresso.</Text>
+          <View style={{ marginTop: theme.spacing.md }}>
+            <MoodSelector selectedMood={moodAfter} onSelect={setMoodAfter} />
+          </View>
         </AppCard>
 
         <AppCard style={styles.formCard}>
@@ -148,6 +187,67 @@ export const MoodFeedbackScreen: React.FC<MoodFeedbackScreenProps> = ({
           />
           <Text style={styles.charCounter}>{notes.length}/200</Text>
         </AppCard>
+
+        {/* Seção Secundária Opcional: apenas se goalAchieved === false / stoppedBeforeGoal === true */}
+        {!!stoppedBeforeGoal && (
+          <AppCard style={styles.formCard}>
+            <Text style={styles.sectionTitle}>Algo dificultou chegar até a meta?</Text>
+            <Text style={styles.sectionSubtitle}>
+              Se quiser, registre o que atrapalhou hoje. Isso ajuda a entender seus padrões.
+            </Text>
+
+            <View style={styles.pillsContainer}>
+              {REASONS_LIST.map(reasonId => {
+                const isSelected = selectedReasons.includes(reasonId);
+                const label = STOP_REASON_LABELS[reasonId] || reasonId;
+                return (
+                  <TouchableOpacity
+                    key={reasonId}
+                    style={[
+                      styles.pill,
+                      isSelected && styles.pillSelected
+                    ]}
+                    onPress={() => toggleReason(reasonId)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[
+                      styles.pillText,
+                      isSelected && styles.pillTextSelected
+                    ]}>
+                      {label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <Text style={[styles.label, { marginTop: theme.spacing.sm }]}>
+              Quer explicar em poucas palavras?
+            </Text>
+            <TextInput
+              style={styles.input}
+              multiline
+              numberOfLines={3}
+              placeholder="Ex: senti dor no joelho depois de alguns minutos"
+              placeholderTextColor="#666666"
+              value={localStopNote}
+              onChangeText={setLocalStopNote}
+              maxLength={200}
+              autoCorrect={false}
+            />
+            <Text style={styles.charCounter}>{localStopNote.length}/200</Text>
+
+            {/* Aviso Preventivo de Saúde */}
+            {showHealthWarning && (
+              <View style={styles.warningContainer}>
+                <AlertTriangle size={16} color={theme.colors.error} style={styles.warningIcon} />
+                <Text style={styles.warningText}>
+                  Se o desconforto for forte ou persistente, pare e procure orientação profissional.
+                </Text>
+              </View>
+            )}
+          </AppCard>
+        )}
 
         <AppButton
           title="Salvar e concluir"
@@ -177,7 +277,72 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     fontSize: 15,
     fontWeight: 'bold',
+  },
+  subTitleText: {
+    color: theme.colors.textSecondary,
+    fontSize: 13,
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  sectionTitle: {
+    color: theme.colors.text,
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginTop: theme.spacing.xs,
+  },
+  sectionSubtitle: {
+    color: theme.colors.textSecondary,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 2,
     marginBottom: theme.spacing.md,
+  },
+  pillsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: theme.spacing.md,
+  },
+  pill: {
+    backgroundColor: theme.colors.card,
+    borderRadius: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  pillSelected: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  pillText: {
+    color: theme.colors.text,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  pillTextSelected: {
+    color: theme.colors.background,
+    fontWeight: 'bold',
+  },
+  warningContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+    borderRadius: 12,
+    padding: theme.spacing.md,
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 59, 48, 0.2)',
+  },
+  warningIcon: {
+    marginRight: theme.spacing.sm,
+  },
+  warningText: {
+    color: theme.colors.text,
+    fontSize: 12,
+    flex: 1,
+    lineHeight: 16,
   },
   label: {
     color: theme.colors.text,

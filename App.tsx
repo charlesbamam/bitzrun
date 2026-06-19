@@ -20,7 +20,7 @@ import { ProfileScreen } from './src/screens/ProfileScreen';
 import { BottomTabs } from './src/components/BottomTabs';
 
 type TabType = 'dashboard' | 'achievements' | 'journey';
-type FlowType = 'setup' | 'running' | 'end_run' | 'mood_feedback' | 'profile' | null;
+type FlowType = 'setup' | 'running' | 'end_run' | 'stop_reason' | 'mood_feedback' | 'profile' | null;
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
@@ -45,6 +45,12 @@ export default function App() {
     distanceKm: number;
     moodBefore: number;
     goalText: string;
+    targetDistanceKm: number;
+    goalAchieved: boolean;
+    goalProgressPercent: number;
+    stoppedBeforeGoal: boolean;
+    stopReasons?: string[];
+    stopNote?: string;
   } | null>(null);
 
   // Carregar dados do storage (histórico, conquistas, perfil)
@@ -129,9 +135,33 @@ export default function App() {
     setTempRunData(null);
   };
 
-  const handleFinishRun = (durationSeconds: number, distanceKm: number, moodBefore: number, goalText: string) => {
-    setTempRunData({ durationSeconds, distanceKm, moodBefore, goalText });
+  const handleFinishRun = (
+    durationSeconds: number,
+    distanceKm: number,
+    moodBefore: number,
+    goalText: string,
+    targetDistanceKm: number
+  ) => {
+    const goalAchieved = distanceKm >= targetDistanceKm;
+    const goalProgressPercent = targetDistanceKm > 0 ? Math.min(distanceKm / targetDistanceKm, 1) : 1;
+    const stoppedBeforeGoal = !goalAchieved;
+
+    setTempRunData({
+      durationSeconds,
+      distanceKm,
+      moodBefore,
+      goalText,
+      targetDistanceKm,
+      goalAchieved,
+      goalProgressPercent,
+      stoppedBeforeGoal,
+    });
     setActiveFlow('end_run');
+  };
+
+  const handleProceedFromEndRun = () => {
+    if (!tempRunData) return;
+    setActiveFlow('mood_feedback');
   };
 
   const handleGoToMoodFeedback = () => setActiveFlow('mood_feedback');
@@ -247,7 +277,7 @@ export default function App() {
           durationSeconds={tempRunData.durationSeconds}
           distanceKm={tempRunData.distanceKm}
           runs={runs}
-          onNext={handleGoToMoodFeedback}
+          onNext={handleProceedFromEndRun}
         />
       );
     }
@@ -259,6 +289,8 @@ export default function App() {
           distanceKm={tempRunData.distanceKm}
           durationSeconds={tempRunData.durationSeconds}
           onComplete={handleCompleteRunFlow}
+          stoppedBeforeGoal={tempRunData.stoppedBeforeGoal}
+          targetDistanceKm={tempRunData.targetDistanceKm}
         />
       );
     }

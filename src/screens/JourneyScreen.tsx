@@ -1,8 +1,8 @@
-import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Share, Alert, Dimensions } from 'react-native';
-import { Share2, ArrowUpRight } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Share, Alert, Dimensions, Modal } from 'react-native';
+import { Share2, ArrowUpRight, X, Calendar as CalendarIcon, Clock, Heart, Award, Compass, MessageSquare } from 'lucide-react-native';
 import { BarChart } from 'react-native-gifted-charts';
-import { Run, MemoryCard, getMoodEmoji } from '../services/storage';
+import { Run, MemoryCard, getMoodEmoji, STOP_REASON_LABELS, formatFriendlyDate } from '../services/storage';
 import { theme } from '../theme/theme';
 
 interface JourneyScreenProps {
@@ -11,7 +11,26 @@ interface JourneyScreenProps {
   onShareAll: () => void;
 }
 
+const formatDateTimeFriendly = (dateString: string) => {
+  const date = new Date(dateString);
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${day}/${month}/${year}, ${hours}:${minutes}`;
+};
+
+const MOOD_LABELS: Record<number, string> = {
+  1: 'Muito difícil',
+  2: 'Cansado',
+  3: 'Regular',
+  4: 'Bem',
+  5: 'Excelente'
+};
+
 export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards, onShareAll }) => {
+  const [selectedRunForDetail, setSelectedRunForDetail] = useState<Run | null>(null);
   const now = new Date();
 
   // 1. Filtragem por períodos (Últimos 30 dias vs Anterior 30-60 dias)
@@ -221,6 +240,70 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
         </View>
       ) : null}
 
+      {/* Seção Últimas corridas */}
+      <View style={styles.memorySection}>
+        <Text style={styles.sectionTitle}>Últimas corridas</Text>
+        {runs.length === 0 ? (
+          <View style={styles.emptyMemoryCard}>
+            <Text style={styles.emptyMemoryText}>
+              Suas corridas registradas aparecerão aqui.
+            </Text>
+            <Text style={[styles.emptyMemoryText, { fontSize: 12, marginTop: 4 }]}>
+              Comece com uma corrida curta para criar seu primeiro registro.
+            </Text>
+          </View>
+        ) : (
+          runs.map(run => {
+            const dateFriendly = formatFriendlyDate(run.date);
+            const hasMeta = typeof run.targetDistanceKm === 'number' && run.targetDistanceKm > 0;
+            const isGoalMet = hasMeta && run.distance >= run.targetDistanceKm!;
+            
+            // Dificuldades
+            const mappedReasons = run.stopReasons
+              ? run.stopReasons.map(r => STOP_REASON_LABELS[r] || r)
+              : [];
+
+            return (
+              <TouchableOpacity
+                key={run.id}
+                style={styles.runHistoryCard}
+                onPress={() => setSelectedRunForDetail(run)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.runCardHeader}>
+                  <Text style={styles.runCardDate}>{dateFriendly}</Text>
+                  {hasMeta ? (
+                    <Text style={[styles.goalStatusTag, isGoalMet ? styles.goalMetTag : styles.goalKeepTag]}>
+                      {isGoalMet ? 'Meta alcançada' : 'Hábito mantido'}
+                    </Text>
+                  ) : null}
+                </View>
+
+                <Text style={styles.runCardDistance}>
+                  {run.distance.toFixed(2).replace('.', ',')} km
+                  {hasMeta ? ` de ${run.targetDistanceKm!.toFixed(1).replace('.', ',')} km` : ''}
+                </Text>
+
+                <View style={styles.runCardMoodsRow}>
+                  <Text style={styles.runCardMoodLabel}>
+                    Antes: <Text style={styles.runCardMoodValue}>{MOOD_LABELS[run.moodBefore] || 'Regular'}</Text>
+                  </Text>
+                  <Text style={[styles.runCardMoodLabel, { marginLeft: 16 }]}>
+                    Depois: <Text style={styles.runCardMoodValue}>{MOOD_LABELS[run.moodAfter] || 'Regular'}</Text>
+                  </Text>
+                </View>
+
+                {mappedReasons.length > 0 ? (
+                  <Text style={styles.runCardDifficulty} numberOfLines={1}>
+                    Dificuldade: {mappedReasons.join(', ')}
+                  </Text>
+                ) : null}
+              </TouchableOpacity>
+            );
+          })
+        )}
+      </View>
+
       {/* Seção Corridas registradas */}
       <View style={styles.memorySection}>
         <Text style={styles.sectionTitle}>Corridas registradas</Text>
@@ -252,6 +335,150 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
           </TouchableOpacity>
         </View>
       )}
+
+      {/* Modal de Detalhe do Registro */}
+      <Modal
+        visible={selectedRunForDetail !== null}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setSelectedRunForDetail(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Registro da corrida</Text>
+              <TouchableOpacity
+                onPress={() => setSelectedRunForDetail(null)}
+                style={styles.modalCloseBtn}
+                activeOpacity={0.7}
+              >
+                <X size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+
+            {selectedRunForDetail && (() => {
+              const run = selectedRunForDetail;
+              const hasMeta = typeof run.targetDistanceKm === 'number' && run.targetDistanceKm > 0;
+              const isGoalMet = hasMeta && run.distance >= run.targetDistanceKm!;
+              const mappedReasons = run.stopReasons
+                ? run.stopReasons.map(r => STOP_REASON_LABELS[r] || r)
+                : [];
+              
+              const mins = Math.floor(run.duration / 60);
+              const secs = run.duration % 60;
+              const durationStr = `${mins}min ${secs}s`;
+
+              return (
+                <ScrollView contentContainerStyle={styles.modalScrollBody} showsVerticalScrollIndicator={false}>
+                  
+                  <View style={styles.detailRow}>
+                    <CalendarIcon size={14} color="#A0A0A0" style={styles.detailRowIcon} />
+                    <View>
+                      <Text style={styles.detailRowLabel}>Data</Text>
+                      <Text style={styles.detailRowValue}>{formatDateTimeFriendly(run.date)}</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <Award size={14} color="#A0A0A0" style={styles.detailRowIcon} />
+                    <View>
+                      <Text style={styles.detailRowLabel}>Meta da corrida</Text>
+                      <Text style={styles.detailRowValue}>
+                        {hasMeta ? `${run.targetDistanceKm!.toFixed(1).replace('.', ',')} km` : 'Meta não registrada'}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <Compass size={14} color="#A0A0A0" style={styles.detailRowIcon} />
+                    <View>
+                      <Text style={styles.detailRowLabel}>Distância feita</Text>
+                      <Text style={styles.detailRowValue}>{run.distance.toFixed(2).replace('.', ',')} km</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <Clock size={14} color="#A0A0A0" style={styles.detailRowIcon} />
+                    <View>
+                      <Text style={styles.detailRowLabel}>Duração</Text>
+                      <Text style={styles.detailRowValue}>{durationStr}</Text>
+                    </View>
+                  </View>
+
+                  {hasMeta && (
+                    <View style={styles.detailRow}>
+                      <Award size={14} color="#A0A0A0" style={styles.detailRowIcon} />
+                      <View>
+                        <Text style={styles.detailRowLabel}>Status</Text>
+                        <Text style={[styles.detailRowValue, { color: isGoalMet ? '#CCFF00' : '#A0A0A0', fontWeight: 'bold' }]}>
+                          {isGoalMet ? 'Meta alcançada' : 'Hábito mantido'}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+
+                  <View style={styles.detailRow}>
+                    <Heart size={14} color="#A0A0A0" style={styles.detailRowIcon} />
+                    <View>
+                      <Text style={styles.detailRowLabel}>Como você chegou</Text>
+                      <Text style={styles.detailRowValue}>{MOOD_LABELS[run.moodBefore] || 'Regular'}</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <Heart size={14} color="#A0A0A0" style={styles.detailRowIcon} />
+                    <View>
+                      <Text style={styles.detailRowLabel}>Como você terminou</Text>
+                      <Text style={styles.detailRowValue}>{MOOD_LABELS[run.moodAfter] || 'Regular'}</Text>
+                    </View>
+                  </View>
+
+                  {mappedReasons.length > 0 && (
+                    <View style={styles.detailRow}>
+                      <X size={14} color="#FF3B30" style={styles.detailRowIcon} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.detailRowLabel}>O que dificultou</Text>
+                        <Text style={[styles.detailRowValue, { color: '#FF3B30' }]}>
+                          {mappedReasons.join(', ')}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+
+                  {run.stopNote ? (
+                    <View style={styles.detailRow}>
+                      <MessageSquare size={14} color="#A0A0A0" style={styles.detailRowIcon} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.detailRowLabel}>Observação</Text>
+                        <Text style={styles.detailRowValue}>{run.stopNote}</Text>
+                      </View>
+                    </View>
+                  ) : null}
+
+                  {run.notes ? (
+                    <View style={styles.detailRow}>
+                      <MessageSquare size={14} color="#A0A0A0" style={styles.detailRowIcon} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.detailRowLabel}>Nota da corrida</Text>
+                        <Text style={styles.detailRowValue}>{run.notes}</Text>
+                      </View>
+                    </View>
+                  ) : null}
+
+                </ScrollView>
+              );
+            })()}
+
+            <TouchableOpacity
+              style={styles.modalBtnCloseBottom}
+              onPress={() => setSelectedRunForDetail(null)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.modalBtnCloseBottomText}>Fechar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -475,5 +702,134 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     textAlign: 'center',
     fontWeight: '300',
+  },
+  runHistoryCard: {
+    backgroundColor: '#1E1E1E',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#262626',
+  },
+  runCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  runCardDate: {
+    color: '#A0A0A0',
+    fontSize: 12,
+    fontWeight: '300',
+  },
+  goalStatusTag: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  goalMetTag: {
+    backgroundColor: 'rgba(204, 255, 0, 0.15)',
+    color: '#CCFF00',
+  },
+  goalKeepTag: {
+    backgroundColor: 'rgba(160, 160, 160, 0.15)',
+    color: '#A0A0A0',
+  },
+  runCardDistance: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  runCardMoodsRow: {
+    flexDirection: 'row',
+    marginBottom: 4,
+  },
+  runCardMoodLabel: {
+    color: '#A0A0A0',
+    fontSize: 12,
+    fontWeight: '300',
+  },
+  runCardMoodValue: {
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  runCardDifficulty: {
+    color: '#FF3B30',
+    fontSize: 11,
+    marginTop: 6,
+    fontWeight: '500',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#121212',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    maxHeight: '85%',
+    borderTopWidth: 1,
+    borderColor: '#262626',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderColor: '#262626',
+    paddingBottom: 16,
+    marginBottom: 16,
+  },
+  modalTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  modalCloseBtn: {
+    padding: 4,
+  },
+  modalScrollBody: {
+    gap: 16,
+    paddingBottom: 24,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  detailRowIcon: {
+    marginRight: 12,
+    marginTop: 4,
+  },
+  detailRowLabel: {
+    color: '#A0A0A0',
+    fontSize: 11,
+    fontWeight: '300',
+    textTransform: 'uppercase',
+  },
+  detailRowValue: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  modalBtnCloseBottom: {
+    backgroundColor: '#1E1E1E',
+    borderWidth: 1,
+    borderColor: '#262626',
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  modalBtnCloseBottomText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });

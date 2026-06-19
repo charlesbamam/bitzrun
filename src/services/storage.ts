@@ -9,6 +9,10 @@ export interface Run {
   moodAfter: number; // 1 a 5
   notes?: string;
   isAfterLongBreak: boolean;
+  stoppedBeforeGoal?: boolean;
+  stopReasons?: string[];
+  stopNote?: string;
+  targetDistanceKm?: number;
 }
 
 export interface Achievement {
@@ -34,6 +38,28 @@ export interface UserProfile {
   avatarUri?: string;
   weeklyRunGoal?: number;
 }
+
+export const STOP_REASON_LABELS: Record<string, string> = {
+  knee_pain: "Joelho doeu",
+  back_pain: "Costas doeram",
+  foot_pain: "Pé doeu",
+  shin_pain: "Canela doeu",
+  ankle_pain: "Tornozelo doeu",
+  cramps: "Cãibra",
+  muscle_pain: "Dor muscular",
+  out_of_breath: "Fiquei sem fôlego",
+  strong_tiredness: "Cansaço forte",
+  felt_bad: "Me senti mal",
+  dizziness: "Tontura",
+  heat: "Calor atrapalhou",
+  no_motivation: "Sem vontade",
+  anxiety: "Ansiedade",
+  no_time: "Falta de tempo",
+  pace_too_hard: "Ritmo pesado demais",
+  goal_too_high: "Meta alta demais",
+  distraction: "Distração",
+  other: "Outro motivo"
+};
 
 const KEYS = {
   RUNS: 'bitzrun_runs',
@@ -221,6 +247,10 @@ export const StorageService = {
     moodBefore: number;
     moodAfter: number;
     notes?: string;
+    stoppedBeforeGoal?: boolean;
+    stopReasons?: string[];
+    stopNote?: string;
+    targetDistanceKm?: number;
   }): Promise<{ run: Run; newAchievements: Achievement[]; newMemoryCards: MemoryCard[] }> {
     const runs = await this.getRuns();
     const achievements = await this.getAchievements();
@@ -309,6 +339,22 @@ export const StorageService = {
         id: `card_mood_${run.id}`,
         date: run.date,
         text: `${dateFriendly} — Você saiu sem vontade e voltou melhor. Isso muda o seu dia.`,
+      });
+    }
+
+    // 5. Corrida interrompida antes da meta
+    if (run.stoppedBeforeGoal) {
+      const mappedReasons = run.stopReasons
+        ? run.stopReasons.map(reasonId => STOP_REASON_LABELS[reasonId] || reasonId)
+        : [];
+      const reasonsText = mappedReasons.length > 0
+        ? `Dificuldade registrada: ${mappedReasons.join(', ')}`
+        : 'Interrompida antes da meta';
+      const noteText = run.stopNote ? ` (${run.stopNote})` : '';
+      newMemoryCards.push({
+        id: `card_stop_${run.id}`,
+        date: run.date,
+        text: `${dateFriendly} — ${reasonsText}${noteText}.`,
       });
     }
 
