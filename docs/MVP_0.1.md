@@ -1,51 +1,84 @@
-# Documentação do MVP 0.1 — Bitzrun
+# Bitzrun — MVP 0.1
 
-Este documento apresenta a análise de escopo, visão do produto, arquitetura e decisões de negócio adotadas para a primeira versão (MVP 0.1) do Bitzrun.
-
----
-
-## 🧭 Visão do Produto
-O Bitzrun é projetado para atuar como um companheiro de hábitos e saúde mental. O seu principal direcionador é eliminar a resistência inicial da corrida para pessoas sedentárias ou que lutam para manter rotinas ativas. Não há tabelas de classificação, comparações com atletas de elite ou cobrança por alta performance competitiva.
+Este documento detalha o escopo conceitual, as decisões de produto e a especificação técnica da versão 0.1 do Bitzrun.
 
 ---
 
-## ⚡ Problema que o app resolve
-*   **Falta de Consistência**: Aplicativos comuns de corrida focam em desempenho e distâncias longas, desmotivando iniciantes após poucos dias.
-*   **Ansiedade de Desempenho**: Usuários sentem-se intimidados ao competir com o histórico de outras pessoas.
-*   **Ausência de Retorno Emocional**: Aplicativos focam estritamente em números brutos (pace/ritmo) em vez do bem-estar mental.
+## 👁️ Visão Geral do Produto
+O Bitzrun é um companheiro digital móvel projetado para ajudar pessoas a construírem e manterem o hábito de correr sem sofrerem com a pressão de performance, velocidade ou competição esportiva. É um app voltado para iniciantes, sedentários ou indivíduos com dificuldades psicológicas para treinar.
+
+*   **Slogan**: "Consistência antes de performance."
+*   **Tom**: Humanizado, acolhedor, motivador e não punitivo. 
 
 ---
 
-## 👥 Público Inicial
-*   Pessoas iniciando a prática de atividade física.
-*   Sedentários buscando desenvolver consistência e disciplina.
-*   Pessoas que valorizam o bem-estar mental e a superação emocional através da corrida.
+## 🎯 Problema e Público-Alvo
+*   **Problema**: A maioria dos aplicativos de corrida foca em desempenho competitivo (PACE, velocidade, comparação com amigos, ranking). Isso afasta e desmotiva iniciantes que sentem vergonha, dores ou desistem com facilidade.
+*   **Público**: Pessoas que desejam criar o hábito da corrida, mas sofrem de resistência mental, cansaço frequente, pressões de agenda e buscam apenas consistência e bem-estar.
 
 ---
 
-## 📲 Telas e Fluxos Implementados
-1.  **Splash & Entrada**: Apresentação da marca, login de identificação local e entrada expressa como visitante.
-2.  **Home / Hoje**: Dashboard central com o anel de progresso circular (`ProgressRing`) monitorando a consistência da semana, botão de ação rápida "Iniciar Corrida" e exibição das estatísticas acumuladas.
-3.  **Configuração de Meta da Semana**: Modal e seletor rápido (2x a 6x treinos semanais) que altera dinamicamente os textos da Home e o anel sem necessidade de digitação.
-4.  **Preparação da Corrida (Meta da Corrida)**: Seleção de humor antes de correr e definição da meta diária em quilômetros (KM) com validações contra valores incorretos.
-5.  **Corrida Ativa**: Cronômetro em tempo real, simulação de distância, banner com alertas motivacionais de acordo com tempo/distância e controles de Pause, Play e Concluir.
-6.  **Humor depois & Registro final**: Inserção de nota curta do dia e feedback visual de humor pós-corrida.
-7.  **Conclusão & Sucesso**: Tela com resumo do treino atual, exibindo conquistas e o cartão de memória gerado para a corrida.
-8.  **Jornada**: Histórico contendo cards Antes x Agora, cartões de memórias e gráfico semanal de treinos com estados vazios dedicados a usuários sem histórico longo.
-9.  **Conquistas**: Timeline de conquistas com progresso parcial dinâmico (modo read-only) para motivar o atingimento das conquistas bloqueadas.
-10. **Perfil**: Alteração de foto de avatar puxando a galeria de imagens nativa do iPhone, edição de apelido e limpeza de dados de teste locais.
+## 🔄 Fluxo Principal de Telas (MVP 0.1)
+
+1.  **Tela de Apresentação (Login/Cadastro/Visitante)**:
+    *   Entrada simplificada sem autenticação remota. O usuário cadastra seu nome de preferência que fica gravado na memória do dispositivo.
+2.  **Home / Hoje (Dashboard)**:
+    *   Exibe o Índice de Consistência (0 a 100).
+    *   Exibe a sequência de dias ativos (Streak).
+    *   Exibe o painel de progresso semanal da meta (ex: "2 de 3 corridas feitas" / "Sua meta: 3 corridas por semana").
+3.  **Preparação de Corrida**:
+    *   O usuário seleciona o humor de entrada (1 a 5) e escolhe sua distância-alvo em KM (0,5 km, 1 km, 2 km, 3 km, 5 km ou Personalizada).
+4.  **Corrida em Andamento**:
+    *   Exibição do cronômetro ativo e simulação gradual de distância.
+    *   Controles de pausa e finalização.
+    *   Mensagens motivacionais baseadas em tempo ou distância atingida.
+5.  **Resumo da Corrida**:
+    *   Exibe as estatísticas gerais do treino concluído, com uma frase de apoio positiva e comparativos narrativos não-agressivos sobre sua evolução.
+6.  **Humor Pós-Corrida & Interrupção (Integrados)**:
+    *   Coleta do humor pós-treino (1 a 5).
+    *   Campo de anotações gerais limitado a 200 caracteres.
+    *   **Se a corrida for encerrada antes da meta**: Exibição da seção secundária sutil de interrupção contendo Pills de seleção múltipla (Joelho doeu, Falta de tempo, Fiquei sem fôlego, etc.) e aviso de cuidado de saúde preventivo caso selecionado sintomas como Tontura ou Me senti mal.
+7.  **Jornada & Histórico**:
+    *   Gráfico semanal das últimas 4 semanas.
+    *   Seção de Últimas Corridas (Diário de Corrida) detalhando o histórico com cards interativos. Ao clicar, exibe os detalhes completos de cada registro.
+    *   Cartões de Memória gerados automaticamente com conquistas notáveis do dia.
 
 ---
 
-## 💾 Dados Locais Salvos (AsyncStorage)
-*   `bitzrun_profile`: Objeto contendo nome, pontuação de consistência, streak atual, data da última corrida, URI do avatar e a propriedade `weeklyRunGoal`.
-*   `bitzrun_runs`: Lista contendo o histórico de sessões com IDs, distâncias decimais em km, durações em segundos, humor inicial/final, notas textuais e indicadores de retorno de atividade.
-*   `bitzrun_achievements`: Registro de conquistas desbloqueadas contendo o identificador do marco e a data correspondente.
-*   `bitzrun_memory_cards`: Coleção de notas motivacionais geradas pelo storage após treinos representativos.
+## 💾 Modelagem de Dados Locais (AsyncStorage)
+Toda a persistência é mantida no celular do usuário através do AsyncStorage, estruturada sob as seguintes entidades:
+
+*   **UserProfile**:
+    *   `name`: string
+    *   `consistencyScore`: number
+    *   `streak`: number
+    *   `weeklyRunGoal`: number (2 a 6, padrão 3)
+    *   `avatarUri`: string (opcional)
+    *   `lastRunDate`: string (opcional)
+*   **Run**:
+    *   `id`: string
+    *   `date`: string (ISO Date)
+    *   `distance`: number (km)
+    *   `duration`: number (segundos)
+    *   `moodBefore`: number
+    *   `moodAfter`: number
+    *   `notes`: string (opcional)
+    *   `stoppedBeforeGoal`: boolean (opcional)
+    *   `stopReasons`: string[] (opcional)
+    *   `stopNote`: string (opcional)
+    *   `targetDistanceKm`: number (opcional)
 
 ---
 
 ## 🧠 Decisões Importantes de Produto
-*   **Decisão 1: Distância por KM**: Substituição das metas de tempo por distâncias em KM para dar maior tangibilidade física ao progresso, mesmo operando em modo de simulação inicial.
-*   **Decisão 2: Sem GPS e Backend**: Foco na validação visual e de fluxo antes de investir em custos de nuvem ou consumo excessivo de bateria por localização.
-*   **Decisão 3: Contraste Visual Escuro**: Visual premium de base preta e verde-limão energético de forma a valorizar o aspecto iOS moderno e profissional do aplicativo Bitzrun.
+
+1.  **Consistência é a Métrica Principal**: O score da home incentiva o usuário a sair de casa com frequência. A distância e o tempo são secundários.
+2.  **Não-punição de interrupção**: Se o usuário não bater a meta, o app não diz "Você falhou". O app exibe "Hábito mantido" e abre espaço opcional para coletar de forma sutil o que atrapalhou (sempre após coletar o humor dele, priorizando a saúde mental).
+3.  **Segurança em Primeiro Lugar**: Se o usuário registra dor forte como "Tontura" ou "Me senti mal", mostramos um aviso visual de cuidado de saúde e orientação profissional.
+
+---
+
+## 🛑 O que ficou de fora do MVP 0.1
+*   **GPS e Acompanhamento de Rotas verídicas**: Apenas simulação ativa de treino para validação conceitual e UX de botões de corrida.
+*   **Autenticação e Nuvem**: Não há cadastro remoto ou login por e-mail/senha.
+*   **Compartilhamento Social Real**: Integração apenas com a API nativa de compartilhamento de texto do celular, sem feeds sociais no app.

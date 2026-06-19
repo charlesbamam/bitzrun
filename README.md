@@ -48,6 +48,9 @@ Validar a aderência da experiência do usuário no desenvolvimento do hábito d
 *   **Meta da Corrida**: Preparação de corrida focada em distância em quilômetros (0.5 km, 1 km, 2 km, 3 km, 5 km ou Personalizada) com validações robustas.
 *   **Cronômetro Ativo & Simulação**: Tela de corrida com suporte ao teclado, barra de progresso, botão de pause/play de alto contraste e simulação realista de distância percorrida.
 *   **Humor antes e depois**: Registro emocional para monitorar o benefício mental do esporte.
+*   **Motivo da Interrupção (Integrado)**: Seção opcional e sutil no fluxo de humor quando a meta de distância não é alcançada. Coleta fatores como cãibra, dor, falta de tempo ou ritmo pesado, sem gerar sensação de culpa no usuário.
+*   **Diário de Corrida (Últimas Corridas)**: Histórico completo e detalhado exibido na aba Jornada. Lista todos os treinos em ordem decrescente, exibindo distância, metas, status ("Meta alcançada" ou "Hábito mantido"), humor e dificuldades.
+*   **Detalhe do Registro**: Painel interativo de detalhes ao tocar em qualquer card de corrida na Jornada, exibindo duração, notas extras e observações sobre dificuldades registradas.
 *   **Cartões de Memória**: Geração de registros marcantes baseados em superações reais de distância ou regularidade.
 *   **Conquistas**: Desbloqueio e monitoramento com barra de progresso parcial de marcos de consistência e evolução.
 *   **Perfil & Foto**: Escolha de foto de perfil real acessando a galeria nativa do iPhone.
@@ -64,5 +67,5 @@ Validar a aderência da experiência do usuário no desenvolvimento do hábito d
 
 ## 📋 Próximos Passos Sugeridos
 1.  **Fase 0.2**: Refinamento visual fino da UI e testes fechados com 3 a 5 usuários iniciais.
-2.  **Fase 0.3**: Integração com serviços de localização nativos (GPS real) e acompanhamento de ritmo real.
-3.  **Fase 0.4**: Sincronização em nuvem e banco de dados remoto (Supabase ou Firebase).
+2.  **Fase 0.3**: Integração com GPS real para monitoramento físico verídico.
+3.  **Fase 0.4**: Sincronização em nuvem e banco de dados remoto (ex: Supabase).

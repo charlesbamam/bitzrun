@@ -1,87 +1,80 @@
-# Checklist de Testes Manuais (QA) — Bitzrun MVP 0.1
+# Bitzrun — Checklist de Teste Manual (QA)
 
-Este guia define o roteiro de testes para validação e homologação do aplicativo Bitzrun em um iPhone real via **Expo Go**.
-
----
-
-## 📱 Fluxo de Entrada e Identificação
-- [ ] **Entrada como Visitante**:
-    *   Abrir o aplicativo e tocar no botão "Entrar como Visitante".
-    *   Verificar se o aplicativo redireciona o usuário para a Home (Dashboard) passando pela tela de transição com slogan.
-- [ ] **Cadastro de Nome**:
-    *   Na tela inicial, selecionar "Crie seu ponto de partida" (Cadastro).
-    *   Tentar avançar com o campo de nome vazio e checar se há alerta de restrição.
-    *   Inserir um nome (máximo 20 caracteres) e verificar se o teclado se comporta corretamente (não cobrindo o botão "Começar").
-    *   Confirmar se o Dashboard carrega exibindo o nome inserido no cabeçalho.
+Este documento contém o checklist de verificação para guiar os testes manuais da versão MVP 0.1 do Bitzrun no iPhone ou simulador iOS.
 
 ---
 
-## 🏠 Dashboard (Hoje) & Configurações de Metas
-- [ ] **Interface da Home**:
-    *   Verificar se o anel de progresso é renderizado perfeitamente.
-    *   Checar se as estatísticas iniciais exibem zeros de forma elegante caso o perfil seja novo.
-- [ ] **Alteração da Meta da Semana (Home)**:
-    *   Tocar no link "Alterar meta" no card de progresso.
-    *   Verificar se o modal nativo desliza da parte inferior da tela.
-    *   Selecionar uma das opções (ex: 4x por semana — Firme) e tocar em "Salvar meta".
-    *   Confirmar se a Home atualiza o texto de apoio para "Sua meta: 4 corridas por semana" e se o anel reflete a proporção.
-- [ ] **Alteração da Meta da Semana (Perfil)**:
-    *   Ir para a aba Perfil, clicar no seletor rápido `2 | 3 | 4 | 5 | 6` de meta semanal.
-    *   Verificar se o valor atualiza na tela de perfil instantaneamente e se, ao voltar para a Home, a alteração foi sincronizada.
+## 🔐 1. Fluxo de Boas-Vindas e Identificação
+*   [ ] **Entrar como Visitante**: Ao abrir o app pela primeira vez, tocar no botão de visitante e verificar se o fluxo segue sem pedir login.
+*   [ ] **Cadastro de Nome**: Registrar o nome e verificar se o app prossegue corretamente para a animação de boas-vindas.
+*   [ ] **Animação de Transição**: Checar se a tela de carregamento após a identificação transiciona suavemente para o Dashboard principal.
 
 ---
 
-## 🏃 Fluxo de Corrida
-- [ ] **Footer "Correr"**:
-    *   Clicar no botão central verde-limão "Correr" no rodapé.
-    *   Verificar se o fluxo de preparação de corrida é acionado de imediato.
-- [ ] **Preparar Corrida**:
-    *   Verificar se a pergunta *"Como você está chegando hoje?"* e o seletor de humor de 1 a 5 funcionam por toque.
-    *   Confirmar que o título exibe *"Meta da corrida"* e a pergunta de distância exibe *"Qual distância você quer tentar hoje?"*.
-- [ ] **Meta da Corrida (Distâncias Fixas)**:
-    *   Selecionar a meta de "2 km" e tocar em iniciar.
-    *   Verificar se a corrida ativa se inicia com a distância-alvo configurada em 2.0 km.
-- [ ] **Meta da Corrida (Meta Personalizada)**:
-    *   Selecionar a opção "Personalizada".
-    *   Tentar iniciar a corrida com o campo de texto vazio e verificar o alerta *"Informe uma distância válida para continuar."*.
-    *   Digitar valores inválidos (0, negativos, maiores que 50) e verificar se há barreira de validação.
-    *   Digitar uma distância válida usando vírgula (ex: `2,5`) ou ponto (ex: `3.5`). Confirmar se a meta é reconhecida e o treino inicia sem erros de NaN.
-- [ ] **Corrida em Andamento (Ativa)**:
-    *   Verificar se o cronômetro avança de 1 em 1 segundo.
-    *   Checar se a distância avança de forma simulada a cada segundo.
-    *   Verificar se a barra de progresso horizontal se preenche proporcionalmente à distância percorrida.
-    *   Confirmar a exibição de banners motivacionais quando o tempo ou a distância atingem marcas específicas.
-- [ ] **Pausar e Continuar**:
-    *   Tocar no botão "Pausar" e verificar se o cronômetro e a distância param.
-    *   Confirmar se o botão muda para "Continuar" com preenchimento em verde-limão e alto contraste de texto.
-    *   Tocar em "Continuar" e verificar se o treino retoma a contagem normalmente.
-- [ ] **Encerrar Corrida**:
-    *   Tocar no botão de Stop (quadrado) e confirmar a finalização da corrida.
-    *   Se o treino tiver menos de 5 segundos, checar se há alerta de descarte por tempo curto.
+## 🏠 2. Dashboard / Home
+*   [ ] **Nome de Usuário**: Validar se o nome cadastrado é exibido na Home.
+*   [ ] **Índice de Consistência**: Verificar se o círculo de progresso ou pontuação é exibido corretamente (inicia em 0).
+*   [ ] **Texto de Meta da Semana**:
+    *   Verificar se exibe `"Meta da semana"` como título.
+    *   Exibir `"X de Y corridas feitas"`.
+    *   Texto de apoio: `"Sua meta: Y corridas por semana."`
+*   [ ] **Mudança Dinâmica de Meta Semanal**:
+    *   Tocar no card de Meta e alterar a meta (valores 2, 3, 4, 5 ou 6).
+    *   Verificar se o dashboard atualiza o texto de apoio imediatamente (ex: se selecionou 4, deve exibir "Sua meta: 4 corridas por semana.").
+    *   Validar os textos dinâmicos de falta: se faltar 1, deve exibir "Falta 1 corrida para fechar sua semana.", se faltar mais, "Faltam X corridas para fechar sua semana.".
 
 ---
 
-## 📊 Pós-Corrida & Telas de Fechamento
-- [ ] **Resumo da Corrida**:
-    *   Verificar se a tela de resumo exibe a distância exata, o tempo percorrido e o pace médio calculados do treino.
-- [ ] **Humor Pós-Corrida & Notas**:
-    *   Na tela de feedback de humor, checar se é possível selecionar o sentimento final de 1 a 5.
-    *   Digitar uma nota curta de treino no campo de texto e confirmar se o teclado não impede a visualização dos botões inferiores.
-- [ ] **Registro Concluído (Sucesso)**:
-    *   Checar se a tela final exibe o título *"Registro concluído"* com o subtítulo *"Você manteve o hábito vivo."*.
-    *   Confirmar se o card apresenta o título *"Corrida registrada"* com as métricas de KM e tempo formatadas.
-    *   Tocar no botão "Voltar para Hoje" e verificar se os dados acumulados de treinos foram atualizados na Home.
+## 🏃 3. Fluxo de Corrida (Setup e Ativo)
+*   [ ] **Abertura do Fluxo**: Tocar no botão "Correr" no menu inferior.
+*   [ ] **Escolha de Meta da Corrida**:
+    *   Verificar seleção de distâncias predefinidas (0,5 km, 1 km, 2 km, 3 km, 5 km).
+    *   Tocar em "Personalizada" e testar digitação de metas com vírgula e ponto (ex: `1,5` ou `2.5`). Validar se o app aceita o início normalmente sem gerar erros ou valores `NaN`.
+*   [ ] **Humor de Entrada**: Selecionar humor inicial no seletor de emojis antes de iniciar a corrida.
+*   [ ] **Cronômetro e Simulação**:
+    *   Iniciar treino e observar se o tempo de corrida avança de segundo em segundo.
+    *   Verificar se a distância percorrida é incrementada gradualmente.
+    *   Verificar se a barra de progresso da corrida avança condizente com a distância alvo.
+*   [ ] **Botão Pausar / Continuar**:
+    *   Pausar a corrida. Verificar se o cronômetro e a simulação de quilômetros congelam.
+    *   Tocar no play (de alto contraste verde-limão) e confirmar que o cronômetro volta a rodar.
+*   [ ] **Mensagens Motivacionais**: Checar se banners e notificações internas disparam nos gatilhos pré-estabelecidos de tempo ou distância (ex: aos 10s e ao cruzar 1km).
+*   [ ] **Encerrar Corrida**: Tocar no botão de Stop quadrado. Confirmar alerta caso o treino tenha menos de 5 segundos.
 
 ---
 
-## 📂 Jornada, Conquistas e Perfil
-- [ ] **Jornada**:
-    *   Verificar se o gráfico semanal exibe as colunas com a contagem de treinos.
-    *   Se for um usuário novo, atestar que as seções de comparação e gráfico exibem os estados vazios e explicações adequados em vez de traços quebrados.
-- [ ] **Conquistas**:
-    *   Verificar se a barra de progresso no cabeçalho exibe a contagem correta (ex: *1 de 9 conquistas*).
-    *   Verificar se as conquistas bloqueadas exibem a mensagem de progresso parcial correspondente (ex: *1/10 corridas*) de forma legível.
-- [ ] **Perfil**:
-    *   Tocar em "Alterar foto" e selecionar uma imagem real da galeria do iPhone. Verificar se o avatar é atualizado no Perfil e no topo da Home.
-    *   Editar o nome de usuário local e confirmar a persistência dos dados.
-    *   Clicar em "Limpar dados de teste" e confirmar a caixa de diálogo de segurança. Checar se todo o histórico de corridas, conquistas e fotos é excluído e o app retorna ao estado inicial limpo.
+## 📊 4. Conclusão, Humor e Motivos
+*   [ ] **Resumo (EndRunScreen)**: Verificar se exibe a distância e o tempo finais perfeitamente formatados em português.
+*   [ ] **Tela de Humor Pós-Corrida (MoodFeedbackScreen)**:
+    *   Verificar pergunta principal: *"Como você está se sentindo agora?"* e subtexto *"Compare com antes da corrida. Isso também é progresso."*
+    *   Escolher humor e preencher campo de observações (limite de 200 caracteres).
+*   [ ] **Seção Secundária de Interrupção**:
+    *   **Se a meta FOI atingida**: Confirmar que a seção *"Algo dificultou chegar até a meta?"* **NÃO** aparece.
+    *   **Se a meta NÃO foi atingida**: Confirmar que a seção *"Algo dificultou chegar até a meta?"* **APARECE** abaixo das notas.
+    *   Tocar nas pills de dificuldade. Validar se o comportamento de seleção múltipla funciona.
+    *   Testar se os labels das pills aparecem traduzidos em português (Joelho doeu, Falta de tempo, etc.).
+    *   Confirmar que o aviso visual de saúde preventiva aparece ao marcar *"Tontura"* ou *"Me senti mal"*.
+    *   Testar botão "Salvar e concluir" sem selecionar nenhum motivo. Verificar se o app salva com sucesso.
+*   [ ] **Registro Concluído**: Confirmar exibição dos cartões de memória gerados e marcos conquistados na tela final.
+
+---
+
+## 📖 5. Jornada e Diário de Corrida
+*   [ ] **Gráfico Semanal**: Validar a exibição da barra correspondente à semana atual.
+*   [ ] **Seção Últimas Corridas**:
+    *   Validar se o novo treino aparece no topo da lista.
+    *   Confirmar exibição de: Data, distância, meta, humor antes/depois por extenso e motivos de interrupção salvos.
+    *   Confirmar que a meta batida mostra o tag verde-limão `"Meta alcançada"` e metas parciais exibem `"Hábito mantido"`.
+*   [ ] **Detalhe do Registro**:
+    *   Tocar no card de corrida. Confirmar abertura do modal de detalhe.
+    *   Validar exibição de todos os dados salvos: Duração formatada, notas extras, observação descritiva de interrupção e data com hora.
+*   [ ] **Marcos e Cartões de Memória**: Validar se os cartões gerados aparecem na seção de momentos marcantes na Jornada e se o compartilhamento via API nativa funciona.
+
+---
+
+## ⚙️ 6. Perfil e Testes Gerais
+*   [ ] **Visualização do Perfil**: Acessar perfil e verificar dados do score e histórico.
+*   [ ] **Foto de Perfil**: Trocar avatar escolhendo uma imagem da galeria do iPhone.
+*   [ ] **Limpeza de Dados de Teste**:
+    *   Tocar em "Limpar testes" no cabeçalho ou no botão correspondente do Perfil.
+    *   Confirmar exclusão e redefinição dos dados para o estado inicial padrão de fábrica.
