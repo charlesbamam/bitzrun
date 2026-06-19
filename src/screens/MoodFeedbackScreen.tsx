@@ -1,13 +1,21 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, TextInput, ActivityIndicator, ScrollView } from 'react-native';
-import { Award, CheckCircle2, ChevronRight, MessageSquare, Smile } from 'lucide-react-native';
-import { StorageService, getMoodEmoji, getMoodText, Achievement, MemoryCard } from '../services/storage';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
+import { CheckCircle2, ChevronRight, Award, Bookmark } from 'lucide-react-native';
+import { StorageService, Achievement, MemoryCard as MemoryCardType } from '../services/storage';
+import { theme } from '../theme/theme';
+import { ScreenContainer } from '../components/ScreenContainer';
+import { AppCard } from '../components/AppCard';
+import { AppButton } from '../components/AppButton';
+import { MoodSelector } from '../components/MoodSelector';
+import { MemoryCard } from '../components/MemoryCard';
+import { AchievementCard } from '../components/AchievementCard';
+import { AppHeader } from '../components/AppHeader';
 
 interface MoodFeedbackScreenProps {
   moodBefore: number;
   distanceKm: number;
   durationSeconds: number;
-  onComplete: (unlockedAchievements: Achievement[], unlockedMemoryCards: MemoryCard[]) => void;
+  onComplete: (unlockedAchievements: Achievement[], unlockedMemoryCards: MemoryCardType[]) => void;
 }
 
 export const MoodFeedbackScreen: React.FC<MoodFeedbackScreenProps> = ({
@@ -16,13 +24,13 @@ export const MoodFeedbackScreen: React.FC<MoodFeedbackScreenProps> = ({
   durationSeconds,
   onComplete,
 }) => {
-  const [moodAfter, setMoodAfter] = useState<number>(3); // default neutro
+  const [moodAfter, setMoodAfter] = useState<number>(3); // Default 3 (Regular)
   const [notes, setNotes] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   
   const [newAchievements, setNewAchievements] = useState<Achievement[]>([]);
-  const [newMemoryCards, setNewMemoryCards] = useState<MemoryCard[]>([]);
+  const [newMemoryCards, setNewMemoryCards] = useState<MemoryCardType[]>([]);
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -49,360 +57,209 @@ export const MoodFeedbackScreen: React.FC<MoodFeedbackScreenProps> = ({
     onComplete(newAchievements, newMemoryCards);
   };
 
-  const moods = [1, 2, 3, 4, 5];
-
   if (isSuccess) {
     return (
-      <ScrollView style={styles.container} contentContainerStyle={styles.successContentContainer} showsVerticalScrollIndicator={false}>
-        <View style={styles.successIconContainer}>
-          <CheckCircle2 size={64} color="#CCFF00" strokeWidth={1.5} />
+      <ScreenContainer scrollable style={styles.container}>
+        <View style={styles.successHeader}>
+          <View style={styles.successIconCircle}>
+            <CheckCircle2 size={36} color={theme.colors.primary} strokeWidth={1.5} />
+          </View>
+          <Text style={styles.successTitle}>Registro concluído</Text>
+          <Text style={styles.successSubtitle}>Você manteve o hábito vivo.</Text>
         </View>
 
-        <Text style={styles.successTitle}>Registro Concluído</Text>
-        <Text style={styles.successSubtitle}>
-          +1 corrida registrada. Sua consistência aumentou!
-        </Text>
+        <View style={styles.successContent}>
+          {/* Cartões de Memória Gerados */}
+          {newMemoryCards.length > 0 ? (
+            newMemoryCards.map(card => (
+              <MemoryCard
+                key={card.id}
+                date={card.date}
+                title="Novo Cartão de Memória"
+                description={card.text}
+                metrics={`${distanceKm.toFixed(2).replace('.', ',')} km em ${Math.round(durationSeconds / 60)} min`}
+              />
+            ))
+          ) : (
+            // Cartão de Memória Padrão solicitado nas especificações
+            <MemoryCard
+              date={new Date().toISOString()}
+              title="Presença Registrada"
+              description="Hoje você apareceu. Esse é o começo da consistência."
+              metrics={`${distanceKm.toFixed(2).replace('.', ',')} km concluídos`}
+            />
+          )}
 
-        {/* Exibição de Conquistas Desbloqueadas */}
-        {newAchievements.length > 0 && (
-          <View style={styles.unlockedSection}>
-            <Text style={styles.sectionTitle}>
-              <Award size={16} color="#CCFF00" strokeWidth={1.5} style={{ marginRight: 6 }} />
-              Conquistas Desbloqueadas ({newAchievements.length})
-            </Text>
-            {newAchievements.map(ach => (
-              <View key={ach.id} style={styles.achievementCard}>
-                <View style={styles.achievementIconCircle}>
-                  <Smile size={20} color="#CCFF00" strokeWidth={1.5} />
-                </View>
-                <View style={styles.achievementTextContainer}>
-                  <Text style={styles.achievementTitleText}>{ach.title}</Text>
-                  <Text style={styles.achievementDescText}>{ach.description}</Text>
-                </View>
+          {/* Conquistas Desbloqueadas */}
+          {newAchievements.length > 0 && (
+            <View style={styles.unlockedContainer}>
+              <View style={styles.unlockedSectionTitleRow}>
+                <Award size={16} color={theme.colors.primary} style={{ marginRight: 6 }} />
+                <Text style={styles.unlockedTitle}>Marcos Desbloqueados ({newAchievements.length})</Text>
               </View>
-            ))}
-          </View>
-        )}
+              {newAchievements.map(ach => (
+                <AchievementCard
+                  key={ach.id}
+                  title={ach.title}
+                  description={ach.description}
+                  isUnlocked={true}
+                  unlockedDate={ach.date}
+                />
+              ))}
+            </View>
+          )}
+        </View>
 
-        {/* Exibição de Cartões de Memória Gerados */}
-        {newMemoryCards.length > 0 && (
-          <View style={styles.unlockedSection}>
-            <Text style={styles.sectionTitle}>
-              <MessageSquare size={16} color="#CCFF00" strokeWidth={1.5} style={{ marginRight: 6 }} />
-              Novo Cartão de Memória
-            </Text>
-            {newMemoryCards.map(card => (
-              <View key={card.id} style={styles.memoryCard}>
-                <Text style={styles.memoryCardText}>{card.text}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* Botão de Fechamento */}
-        <TouchableOpacity style={styles.finishButton} onPress={handleFinish} activeOpacity={0.85}>
-          <Text style={styles.finishButtonText}>VOLTAR PARA O INÍCIO</Text>
-          <ChevronRight size={18} color="#000000" strokeWidth={2} />
-        </TouchableOpacity>
-      </ScrollView>
+        <View style={styles.successFooter}>
+          <AppButton
+            title="Voltar para o início"
+            onPress={handleFinish}
+            variant="primary"
+            style={styles.finishBtn}
+            icon={<ChevronRight size={18} color={theme.colors.background} strokeWidth={2.5} />}
+          />
+        </View>
+      </ScreenContainer>
     );
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
-      <View style={styles.formSection}>
-        <Text style={styles.questionText}>Como você está se sentindo agora?</Text>
-        
-        {/* Seletor de Humor */}
-        <View style={styles.moodSelector}>
-          {moods.map(mood => {
-            const isSelected = moodAfter === mood;
-            return (
-              <TouchableOpacity
-                key={mood}
-                style={[
-                  styles.moodButton,
-                  isSelected && styles.moodButtonSelected
-                ]}
-                onPress={() => setMoodAfter(mood)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.moodEmoji, isSelected && styles.moodEmojiSelected]}>
-                  {getMoodEmoji(mood)}
-                </Text>
-                <Text style={[styles.moodLabel, isSelected && styles.moodLabelSelected]}>
-                  {getMoodText(mood)}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+    <ScreenContainer scrollable>
+      <AppHeader title="Como se sente?" />
 
-        {/* Campo de Notas */}
-        <View style={styles.inputContainer}>
+      <View style={styles.formContainer}>
+        <AppCard style={styles.formCard}>
+          <Text style={styles.questionText}>Como você está se sentindo agora?</Text>
+          <MoodSelector selectedMood={moodAfter} onSelect={setMoodAfter} />
+        </AppCard>
+
+        <AppCard style={styles.formCard}>
           <Text style={styles.label}>Alguma nota sobre hoje?</Text>
           <TextInput
             style={styles.input}
             multiline
             numberOfLines={3}
-            placeholder="Como foi o treino? Algum obstáculo superado? (máx. 200 caracteres)"
-            placeholderTextColor="#A0A0A0"
+            placeholder="Ex: Superei a preguiça inicial. Pernas leves. (máx. 200 caracteres)"
+            placeholderTextColor="#666666"
             value={notes}
             onChangeText={setNotes}
             maxLength={200}
+            autoCorrect={false}
           />
-          <Text style={styles.charCount}>{notes.length}/200</Text>
-        </View>
-      </View>
+          <Text style={styles.charCounter}>{notes.length}/200</Text>
+        </AppCard>
 
-      {/* Footer com Botão de Ação */}
-      <View style={styles.footer}>
-        <TouchableOpacity 
-          style={[styles.ctaButton, isLoading && styles.ctaButtonDisabled]} 
-          onPress={handleSave} 
-          disabled={isLoading}
-          activeOpacity={0.85}
-        >
-          {isLoading ? (
-            <ActivityIndicator size="small" color="#000000" />
-          ) : (
-            <Text style={styles.ctaButtonText}>SALVAR E CONCLUIR</Text>
-          )}
-        </TouchableOpacity>
+        <AppButton
+          title="Salvar e concluir"
+          onPress={handleSave}
+          loading={isLoading}
+          variant="primary"
+          style={styles.saveBtn}
+        />
       </View>
-    </ScrollView>
+    </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#000000', // Preto puro
-  },
-  contentContainer: {
-    padding: 24,
-    paddingTop: 80,
     justifyContent: 'space-between',
-    minHeight: '85%',
+    paddingBottom: theme.spacing.lg,
   },
-  successContentContainer: {
-    padding: 24,
-    paddingTop: 80,
-    paddingBottom: 40,
-    alignItems: 'center',
+  formContainer: {
+    gap: theme.spacing.md,
+    paddingBottom: theme.spacing.xl,
   },
-  formSection: {
-    flex: 1,
-    justifyContent: 'center',
-    marginVertical: 20,
+  formCard: {
+    padding: theme.spacing.lg,
   },
   questionText: {
-    color: '#FFFFFF', // Branco de alto contraste
-    fontSize: 22,
-    fontWeight: '900', // Roboto Black
-    textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 30,
-    fontFamily: 'System',
-  },
-  moodSelector: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 40,
-  },
-  moodButton: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderRadius: 16,
-    backgroundColor: '#1E1E1E', // Cinza escuro
-    marginHorizontal: 4,
-    borderWidth: 1.5,
-    borderColor: '#262626',
-  },
-  moodButtonSelected: {
-    borderColor: '#CCFF00', // Verde-limão ativo
-    borderWidth: 2,
-  },
-  moodEmoji: {
-    fontSize: 28,
-    opacity: 0.6,
-  },
-  moodEmojiSelected: {
-    opacity: 1,
-    transform: [{ scale: 1.15 }],
-  },
-  moodLabel: {
-    color: '#A0A0A0', // Cinza claro
-    fontSize: 12,
-    fontWeight: '300', // Roboto Light
-    marginTop: 8,
-  },
-  moodLabelSelected: {
-    color: '#CCFF00', // Verde-limão
-    fontWeight: '900', // Roboto Black
-  },
-  inputContainer: {
-    backgroundColor: '#1E1E1E', // Cinza escuro
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1.5,
-    borderColor: '#262626',
+    color: theme.colors.text,
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginBottom: theme.spacing.md,
   },
   label: {
-    color: '#CCFF00', // Verde-limão
-    fontSize: 12,
-    fontWeight: '900', // Roboto Black
-    marginBottom: 10,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    color: theme.colors.text,
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: theme.spacing.sm,
   },
   input: {
-    color: '#FFFFFF', // Branco
-    fontSize: 16,
-    fontWeight: '300', // Roboto Light
-    minHeight: 60,
+    backgroundColor: theme.colors.background,
+    borderColor: theme.colors.border,
+    borderWidth: 1,
+    borderRadius: theme.borderRadius.md,
+    height: 90,
+    padding: theme.spacing.md,
+    color: theme.colors.text,
+    fontSize: 13,
     textAlignVertical: 'top',
   },
-  charCount: {
-    color: '#A0A0A0',
+  charCounter: {
+    color: theme.colors.textSecondary,
     fontSize: 11,
     textAlign: 'right',
-    marginTop: 8,
+    marginTop: 4,
+    fontWeight: '600',
   },
-  footer: {
-    marginTop: 40,
-    width: '100%',
+  saveBtn: {
+    marginTop: theme.spacing.sm,
   },
-  ctaButton: {
-    backgroundColor: '#CCFF00', // Verde-limão
-    borderRadius: 28,
-    paddingVertical: 18,
+
+  // Success view styles
+  successHeader: {
     alignItems: 'center',
-    justifyContent: 'center',
+    marginTop: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.md,
   },
-  ctaButtonDisabled: {
-    backgroundColor: 'rgba(204, 255, 0, 0.5)',
-  },
-  ctaButtonText: {
-    color: '#000000', // Texto preto puro
-    fontSize: 16,
-    fontWeight: '900', // Roboto Black
-    letterSpacing: 1.5,
-    fontFamily: 'System',
-  },
-  // Estilos de Sucesso
-  successIconContainer: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: '#1E1E1E',
+  successIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: theme.borderRadius.round,
+    backgroundColor: theme.colors.card,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: theme.spacing.lg,
     borderWidth: 1.5,
-    borderColor: '#CCFF00',
+    borderColor: theme.colors.primary,
   },
   successTitle: {
-    color: '#FFFFFF',
-    fontSize: 26,
-    fontWeight: '900', // Roboto Black
+    color: theme.colors.text,
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: theme.spacing.xs,
     textAlign: 'center',
-    marginBottom: 8,
-    fontFamily: 'System',
   },
   successSubtitle: {
-    color: '#CCFF00', // Verde-limão
-    fontSize: 16,
-    fontWeight: '300', // Roboto Light
+    color: theme.colors.textSecondary,
+    fontSize: 14,
     textAlign: 'center',
-    marginBottom: 40,
-    paddingHorizontal: 24,
+    fontWeight: '500',
   },
-  unlockedSection: {
-    width: '100%',
-    backgroundColor: '#1E1E1E', // Cinza escuro
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#262626',
+  successContent: {
+    marginTop: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
+    gap: theme.spacing.md,
   },
-  sectionTitle: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '900', // Roboto Black
-    marginBottom: 16,
+  unlockedContainer: {
+    marginTop: theme.spacing.sm,
+  },
+  unlockedSectionTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    letterSpacing: 0.5,
+    marginBottom: theme.spacing.sm,
+    paddingLeft: theme.spacing.xs,
   },
-  achievementCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#000000', // Fundo preto puro para contraste dentro do card
-    padding: 12,
-    borderRadius: 14,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#262626',
-  },
-  achievementIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#1E1E1E',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  achievementTextContainer: {
-    flex: 1,
-  },
-  achievementTitleText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '900', // Roboto Black
-  },
-  achievementDescText: {
-    color: '#A0A0A0', // Roboto Light ou Regular
-    fontSize: 11,
-    fontWeight: '300',
-    marginTop: 2,
-  },
-  memoryCard: {
-    backgroundColor: '#000000',
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#262626',
-    borderLeftWidth: 3.5,
-    borderLeftColor: '#CCFF00', // Verde-limão
-    marginBottom: 12,
-  },
-  memoryCardText: {
-    color: '#FFFFFF',
+  unlockedTitle: {
+    color: theme.colors.text,
     fontSize: 13,
-    fontStyle: 'italic',
-    lineHeight: 18,
-    fontWeight: '300',
+    fontWeight: 'bold',
   },
-  finishButton: {
-    backgroundColor: '#CCFF00', // Verde-limão
-    borderRadius: 28,
-    paddingVertical: 18,
+  successFooter: {
     width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 20,
   },
-  finishButtonText: {
-    color: '#000000', // Texto preto puro
-    fontSize: 16,
-    fontWeight: '900', // Roboto Black
-    letterSpacing: 1,
-    marginRight: 8,
-    fontFamily: 'System',
+  finishBtn: {
+    width: '100%',
   },
 });

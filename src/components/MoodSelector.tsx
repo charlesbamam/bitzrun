@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Feather, Battery, Sparkles, Frown, Target, TrendingUp } from 'lucide-react-native';
+import { Frown, Meh, Smile, Laugh, SmilePlus } from 'lucide-react-native';
 import { theme } from '../theme/theme';
 
 interface MoodSelectorProps {
@@ -12,14 +12,13 @@ export const MoodSelector: React.FC<MoodSelectorProps> = ({
   selectedMood,
   onSelect,
 }) => {
-  // Lista de 6 sentimentos/estados profissionais
+  // Mapeamento numérico exato de 1 a 5 conforme regras do banco e especificações do usuário
   const moods = [
-    { value: 1, label: 'Sem vontade', icon: Frown },
-    { value: 2, label: 'Cansado', icon: Battery },
-    { value: 3, label: 'Leve', icon: Feather },
-    { value: 4, label: 'Focado', icon: Target },
-    { value: 5, label: 'Animado', icon: Sparkles },
-    { value: 6, label: 'Melhor agora', icon: TrendingUp },
+    { value: 1, label: 'Muito difícil', icon: Frown },
+    { value: 2, label: 'Cansado', icon: Meh },
+    { value: 3, label: 'Regular', icon: Smile },
+    { value: 4, label: 'Bem', icon: Laugh },
+    { value: 5, label: 'Excelente', icon: SmilePlus },
   ];
 
   return (
@@ -70,22 +69,22 @@ const styles = StyleSheet.create({
   },
   grid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
   },
   moodButton: {
-    width: '30%', // Grid de 3 colunas
+    flex: 1,
     alignItems: 'center',
-    marginBottom: theme.spacing.md,
     paddingVertical: theme.spacing.xs,
   },
   moodButtonSelected: {
     transform: [{ scale: 1.05 }],
   },
   iconWrapper: {
-    width: 52,
-    height: 52,
-    borderRadius: theme.borderRadius.lg,
+    width: 48,
+    height: 48,
+    borderRadius: theme.borderRadius.md,
     backgroundColor: theme.colors.card,
     borderWidth: 1,
     borderColor: theme.colors.border,
@@ -99,7 +98,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.subtle,
   },
   moodLabel: {
-    fontSize: 11,
+    fontSize: 10,
     color: theme.colors.textSecondary,
     fontWeight: '500',
     textAlign: 'center',

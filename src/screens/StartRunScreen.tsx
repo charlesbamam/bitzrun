@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, TextInput, Alert, BackHandler, Modal, ScrollView, Dimensions } from 'react-native';
-import { X, Play, Pause, Square, Award, Bell } from 'lucide-react-native';
-import { getMoodEmoji, getMoodText } from '../services/storage';
+import { X, Play, Pause, Square, Bell, Flame } from 'lucide-react-native';
+import { theme } from '../theme/theme';
+import { ScreenContainer } from '../components/ScreenContainer';
+import { AppCard } from '../components/AppCard';
+import { AppButton } from '../components/AppButton';
+import { MoodSelector } from '../components/MoodSelector';
+import { AppHeader } from '../components/AppHeader';
 
 export interface RunningNotification {
   id: string;
@@ -20,7 +25,7 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
   const [status, setStatus] = useState<'setup' | 'running' | 'paused'>('setup');
   
   // Dados de preparação
-  const [moodBefore, setMoodBefore] = useState<number>(3); // 1 a 5, default 3 (Neutro)
+  const [moodBefore, setMoodBefore] = useState<number>(3); // 1 a 5, default 3 (Regular)
   const [goal, setGoal] = useState<string>('');
 
   // Dados de corrida
@@ -69,7 +74,7 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
     
     const mins = Math.floor(secondsRef.current / 60);
     const secs = secondsRef.current % 60;
-    const timeFormatted = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    const timeFormatted = `${pad(mins)}:${pad(secs)}`;
     
     const newNotification: RunningNotification = {
       id: Math.random().toString(),
@@ -160,11 +165,11 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
     setStatus(prev => (prev === 'running' ? 'paused' : 'running'));
   };
 
-  const handleEndRun = () => {
+  const handleEndPress = () => {
     if (seconds < 5) {
       Alert.alert(
-        'Corrida muito curta',
-        'Sua corrida durou menos de 5 segundos. Deseja encerrar mesmo assim?',
+        'Treino muito curto',
+        'Sua corrida durou menos de 5 segundos. Deseja realmente encerrar?',
         [
           { text: 'Continuar correndo', style: 'cancel' },
           { text: 'Encerrar', onPress: () => onCancel() }
@@ -173,63 +178,30 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
       return;
     }
 
-    // Encerrar e mandar os dados para a tela de conclusão
     onFinishRun(seconds, parseFloat(distance.toFixed(2)), moodBefore, goal.trim());
   };
 
   const formatTime = (totalSecs: number) => {
     const mins = Math.floor(totalSecs / 60);
     const secs = totalSecs % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${pad(mins)}:${pad(secs)}`;
   };
-
-  const moods = [1, 2, 3, 4, 5];
 
   if (status === 'setup') {
     return (
-      <View style={styles.container}>
-        {/* Cabeçalho */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.closeButton} onPress={onCancel}>
-            <X size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Preparar Corrida</Text>
-          <View style={styles.placeholder} />
-        </View>
+      <ScreenContainer scrollable>
+        <AppHeader title="Preparar corrida" onBack={onCancel} />
 
-        {/* Formulário de Humor */}
-        <ScrollView style={styles.formContainer} contentContainerStyle={styles.formContent} showsVerticalScrollIndicator={false}>
-          <Text style={styles.questionText}>Como você está se sentindo antes de correr?</Text>
-          
-          <View style={styles.moodSelector}>
-            {moods.map(mood => {
-              const isSelected = moodBefore === mood;
-              return (
-                <TouchableOpacity
-                  key={mood}
-                  style={[
-                    styles.moodButton,
-                    isSelected && styles.moodButtonSelected
-                  ]}
-                  onPress={() => setMoodBefore(mood)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.moodEmoji, isSelected && styles.moodEmojiSelected]}>
-                    {getMoodEmoji(mood)}
-                  </Text>
-                  <Text style={[styles.moodLabel, isSelected && styles.moodLabelSelected]}>
-                    {getMoodText(mood)}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+        <View style={styles.formContent}>
+          <AppCard style={styles.setupCard}>
+            <Text style={styles.questionText}>Como você está chegando hoje?</Text>
+            <MoodSelector selectedMood={moodBefore} onSelect={setMoodBefore} />
+          </AppCard>
 
-          {/* Distâncias Rápidas */}
-          <View style={styles.quickGoalsContainer}>
-            <Text style={styles.label}>Metas de Distância Rápida</Text>
+          <AppCard style={styles.setupCard}>
+            <Text style={styles.label}>Meta de hoje</Text>
             <View style={styles.quickGoalsRow}>
-              {['1 km', '2 km', '5 km', '10 km', '20 km'].map((quickGoal) => {
+              {['5 min', '10 min', '15 min', '20 min', 'Livre'].map((quickGoal) => {
                 const isSelected = goal === quickGoal;
                 return (
                   <TouchableOpacity
@@ -251,156 +223,126 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
                 );
               })}
             </View>
-          </View>
 
-          {/* Campo de Meta Personalizada */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Meta personalizada (opcional)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Ex: 8 km ou 30 minutos"
-              placeholderTextColor="#666666"
-              value={goal}
-              onChangeText={setGoal}
-              maxLength={40}
-            />
-          </View>
-        </ScrollView>
+            <View style={styles.inputContainer}>
+              <Text style={styles.subLabel}>Ou defina outra meta (opcional)</Text>
+              <TextInput
+                style={styles.customInput}
+                placeholder="Ex: 5 km ou 30 minutos"
+                placeholderTextColor="#666666"
+                value={goal}
+                onChangeText={setGoal}
+                maxLength={40}
+                autoCorrect={false}
+              />
+            </View>
+          </AppCard>
 
-        {/* Botão de Começar */}
-        <View style={styles.footer}>
-          <TouchableOpacity style={styles.startButton} onPress={handleStart} activeOpacity={0.85}>
-            <Text style={styles.startButtonText}>COMEÇAR</Text>
-          </TouchableOpacity>
+          <Text style={styles.motivationText}>
+            Você não precisa fazer muito. Só precisa começar.
+          </Text>
+
+          <AppButton
+            title="Começar corrida"
+            onPress={handleStart}
+            variant="primary"
+            style={styles.startButton}
+          />
         </View>
-      </View>
+      </ScreenContainer>
     );
   }
 
   // Tela de Corrida Ativa (Running / Paused)
   return (
-    <View style={[styles.container, styles.activeContainer]}>
-      {/* Indicador de Status & Ícone de Notificações */}
+    <ScreenContainer style={styles.activeContainer}>
+      {/* Indicador de Status */}
       <View style={styles.activeHeaderContainer}>
-        {/* Placeholder para balanceamento do flexbox */}
-        <View style={styles.headerSpacer} />
-        
-        {/* Status */}
-        <View style={[styles.statusIndicator, { backgroundColor: '#1E1E1E', borderColor: status === 'running' ? '#CCFF00' : '#A0A0A0' }]}>
-          <Text style={[styles.statusText, { color: status === 'running' ? '#CCFF00' : '#A0A0A0' }]}>
+        <View style={[
+          styles.statusIndicator,
+          { borderColor: status === 'running' ? theme.colors.primary : theme.colors.textSecondary }
+        ]}>
+          <Text style={[
+            styles.statusText,
+            { color: status === 'running' ? theme.colors.primary : theme.colors.textSecondary }
+          ]}>
             {status === 'running' ? 'CORRENDO' : 'PAUSADO'}
           </Text>
         </View>
 
-        {/* Ícone Sino de Notificação */}
+        {/* Notificações no Header */}
         <TouchableOpacity 
           style={styles.notificationHeaderBtn} 
           onPress={handleOpenNotifications}
           activeOpacity={0.7}
         >
-          <Bell size={22} color="#CCFF00" strokeWidth={1.5} />
-          {unreadCount > 0 && (
-            <View style={styles.notificationBadge}>
-              <Text style={styles.badgeText}>{unreadCount}</Text>
-            </View>
-          )}
+          <Bell size={20} color={theme.colors.text} />
+          {unreadCount > 0 && <View style={styles.badge} />}
         </TouchableOpacity>
       </View>
 
-      {/* Cronômetro e Distância em Destaque */}
-      <View style={styles.metricsContainer}>
-        {goal ? (
-          <View style={styles.goalIndicator}>
-            <Award size={16} color="#CCFF00" strokeWidth={1.5} />
-            <Text style={styles.goalIndicatorText}>Meta: {goal}</Text>
-          </View>
-        ) : null}
-
-        <Text style={styles.timerValue}>{formatTime(seconds)}</Text>
-        <Text style={styles.timerLabel}>Tempo de Corrida</Text>
-
-        <View style={styles.divider} />
-
-        <Text style={styles.distanceValue}>{distance.toFixed(2).replace('.', ',')}</Text>
-        <Text style={styles.distanceLabel}>Quilômetros (km)</Text>
-      </View>
-
-      {/* Controles de Ação na parte inferior */}
-      <View style={styles.controlsFooter}>
-        {/* Botão de Pausar / Retomar */}
-        <TouchableOpacity 
-          style={[styles.controlButton, styles.pauseButton]} 
-          onPress={handlePauseToggle}
-          activeOpacity={0.8}
-        >
-          {status === 'running' ? (
-            <>
-              <Pause size={20} color="#CCFF00" strokeWidth={1.5} />
-              <Text style={[styles.controlButtonText, { color: '#CCFF00' }]}>Pausar</Text>
-            </>
-          ) : (
-            <>
-              <Play size={20} color="#CCFF00" strokeWidth={1.5} />
-              <Text style={[styles.controlButtonText, { color: '#CCFF00' }]}>Retomar</Text>
-            </>
-          )}
-        </TouchableOpacity>
-
-        {/* Botão de Encerrar Corrida */}
-        <TouchableOpacity 
-          style={[styles.controlButton, styles.endButton]} 
-          onPress={handleEndRun}
-          activeOpacity={0.8}
-        >
-          <Square size={18} color="#000000" strokeWidth={1.5} />
-          <Text style={[styles.controlButtonText, { color: '#000000' }]}>Encerrar</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Banner Flutuante de Notificação Motivacional */}
+      {/* Banner de Notificação Ativa */}
       {activeBanner && (
-        <View style={styles.bannerContainer}>
-          <View style={styles.bannerContent}>
-            <View style={styles.bannerIconCircle}>
-              <Bell size={16} color="#CCFF00" strokeWidth={1.5} />
-            </View>
-            <View style={styles.bannerTextContainer}>
-              <Text style={styles.bannerTitle}>Bitzrun</Text>
-              <Text style={styles.bannerMessage}>{activeBanner.message}</Text>
-            </View>
-          </View>
+        <View style={styles.notificationBanner}>
+          <Text style={styles.bannerText}>{activeBanner.message}</Text>
         </View>
       )}
 
-      {/* Modal / Histórico de Notificações Motivacionais */}
-      <Modal
-        visible={isModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setIsModalVisible(false)}
-      >
+      {/* Visores Principais */}
+      <View style={styles.dashboardContainer}>
+        <Text style={styles.timerValue}>{formatTime(seconds)}</Text>
+        <Text style={styles.timerLabel}>Tempo acumulado</Text>
+
+        <View style={styles.distanceBlock}>
+          <Text style={styles.distanceValue}>{distance.toFixed(2).replace('.', ',')}</Text>
+          <Text style={styles.distanceLabel}>Km simulados</Text>
+        </View>
+      </View>
+
+      {/* Rodapé com Ações */}
+      <View style={styles.activeFooter}>
+        <View style={styles.activeActionsRow}>
+          <TouchableOpacity
+            style={[styles.actionRoundButton, styles.pauseButton]}
+            onPress={handlePauseToggle}
+            activeOpacity={0.8}
+          >
+            {status === 'running' ? (
+              <Pause size={24} color={theme.colors.text} />
+            ) : (
+              <Play size={24} color={theme.colors.background} />
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.actionRoundButton, styles.stopButton]}
+            onPress={handleEndPress}
+            activeOpacity={0.8}
+          >
+            <Square size={20} color={theme.colors.error} fill={theme.colors.error} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Modal de Notificações */}
+      <Modal visible={isModalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Mensagens da Corrida</Text>
-              <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setIsModalVisible(false)}>
-                <X size={20} color="#FFFFFF" strokeWidth={1.5} />
+              <Text style={styles.modalTitle}>Mensagens Motivacionais</Text>
+              <TouchableOpacity onPress={() => setIsModalVisible(false)} style={styles.modalCloseBtn}>
+                <X size={20} color={theme.colors.text} />
               </TouchableOpacity>
             </View>
-            
-            <ScrollView contentContainerStyle={styles.modalScrollContent} showsVerticalScrollIndicator={false}>
+
+            <ScrollView contentContainerStyle={styles.modalList} showsVerticalScrollIndicator={false}>
               {notifications.length === 0 ? (
-                <View style={styles.emptyNotifications}>
-                  <Text style={styles.emptyText}>Nenhuma mensagem recebida ainda.</Text>
-                  <Text style={styles.emptySubtext}>As mensagens motivacionais surgirão conforme você avança.</Text>
-                </View>
+                <Text style={styles.noNotificationsText}>Nenhuma mensagem recebida ainda.</Text>
               ) : (
-                notifications.map(item => (
-                  <View key={item.id} style={styles.notificationItem}>
-                    <View style={styles.notificationTimeBadge}>
-                      <Text style={styles.notificationTimeText}>{item.time}</Text>
-                    </View>
-                    <Text style={styles.notificationItemText}>{item.message}</Text>
+                notifications.map((n) => (
+                  <View key={n.id} style={styles.notificationItem}>
+                    <Text style={styles.notificationTime}>{n.time}</Text>
+                    <Text style={styles.notificationMessage}>{n.message}</Text>
                   </View>
                 ))
               )}
@@ -408,443 +350,261 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
           </View>
         </View>
       </Modal>
-    </View>
+    </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#000000',
-    paddingTop: 50,
-  },
-  activeContainer: {
-    justifyContent: 'space-between',
-    paddingBottom: 60,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    height: 56,
-  },
-  closeButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '900',
-    fontFamily: 'System',
-  },
-  placeholder: {
-    width: 40,
-  },
-  formContainer: {
-    flex: 1,
+    paddingBottom: theme.spacing.lg,
   },
   formContent: {
-    paddingHorizontal: 24,
-    paddingVertical: 20,
+    gap: theme.spacing.md,
+    paddingBottom: theme.spacing.xl,
+  },
+  setupCard: {
+    padding: theme.spacing.lg,
   },
   questionText: {
-    color: '#FFFFFF',
-    fontSize: 22,
-    fontWeight: '300',
-    textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 30,
-    fontFamily: 'System',
-  },
-  moodSelector: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 32,
-  },
-  moodButton: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderRadius: 16,
-    backgroundColor: '#1E1E1E',
-    marginHorizontal: 4,
-    borderWidth: 1.5,
-    borderColor: '#262626',
-  },
-  moodButtonSelected: {
-    backgroundColor: '#262626',
-    borderColor: '#CCFF00',
-  },
-  moodEmoji: {
-    fontSize: 28,
-    opacity: 0.6,
-  },
-  moodEmojiSelected: {
-    opacity: 1,
-    transform: [{ scale: 1.15 }],
-  },
-  moodLabel: {
-    color: '#A0A0A0',
-    fontSize: 12,
-    fontWeight: '300',
-    marginTop: 8,
-  },
-  moodLabelSelected: {
-    color: '#CCFF00',
-    fontWeight: '700',
-  },
-  inputContainer: {
-    backgroundColor: '#1E1E1E',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1.5,
-    borderColor: '#262626',
+    color: theme.colors.text,
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginBottom: theme.spacing.md,
   },
   label: {
-    color: '#A0A0A0',
-    fontSize: 12,
-    fontWeight: '300',
-    marginBottom: 10,
-    textTransform: 'uppercase',
-  },
-  input: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '300',
-    paddingVertical: 4,
-  },
-  footer: {
-    padding: 24,
-    paddingBottom: 40,
-  },
-  startButton: {
-    backgroundColor: '#CCFF00',
-    borderRadius: 28,
-    paddingVertical: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#CCFF00',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  startButtonText: {
-    color: '#000000',
-    fontSize: 18,
-    fontWeight: '900',
-    letterSpacing: 1.5,
-    fontFamily: 'System',
-  },
-  activeHeaderContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    width: '100%',
-  },
-  headerSpacer: {
-    width: 40,
-  },
-  statusIndicator: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 12,
-    borderWidth: 1.5,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '900',
-    letterSpacing: 1,
-  },
-  notificationHeaderBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#1E1E1E',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-    borderWidth: 1.5,
-    borderColor: '#262626',
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    backgroundColor: '#CCFF00',
-    borderRadius: 9,
-    width: 18,
-    height: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#121212',
-  },
-  badgeText: {
-    color: '#000000',
-    fontSize: 9,
-    fontWeight: '900',
-  },
-  metricsContainer: {
-    alignItems: 'center',
-    paddingHorizontal: 24,
-  },
-  goalIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1E1E1E',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    marginBottom: 24,
-    borderWidth: 1.5,
-    borderColor: '#262626',
-  },
-  goalIndicatorText: {
-    color: '#CCFF00',
-    fontSize: 13,
-    fontWeight: '300',
-    marginLeft: 6,
-  },
-  timerValue: {
-    color: '#FFFFFF',
-    fontSize: 64,
-    fontWeight: '900',
-    fontVariant: ['tabular-nums'],
-    fontFamily: 'System',
-  },
-  timerLabel: {
-    color: '#A0A0A0',
+    color: theme.colors.text,
     fontSize: 14,
-    fontWeight: '300',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginTop: 8,
-  },
-  divider: {
-    width: 60,
-    height: 2,
-    backgroundColor: '#262626',
-    marginVertical: 32,
-  },
-  distanceValue: {
-    color: '#CCFF00',
-    fontSize: 54,
-    fontWeight: '900',
-    fontVariant: ['tabular-nums'],
-    fontFamily: 'System',
-  },
-  distanceLabel: {
-    color: '#A0A0A0',
-    fontSize: 14,
-    fontWeight: '300',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginTop: 8,
-  },
-  controlsFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-  },
-  controlButton: {
-    flex: 1,
-    flexDirection: 'row',
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: 8,
-  },
-  pauseButton: {
-    backgroundColor: '#1E1E1E',
-    borderWidth: 1.5,
-    borderColor: '#262626',
-  },
-  endButton: {
-    backgroundColor: '#CCFF00',
-    shadowColor: '#CCFF00',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  controlButtonText: {
-    fontSize: 16,
-    fontWeight: '900',
-    marginLeft: 8,
-    fontFamily: 'System',
-  },
-  quickGoalsContainer: {
-    marginBottom: 24,
-    marginTop: 8,
+    fontWeight: 'bold',
+    marginBottom: theme.spacing.sm,
   },
   quickGoalsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginTop: 8,
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
   },
   quickGoalCard: {
-    backgroundColor: '#1E1E1E',
-    borderRadius: 12,
+    backgroundColor: theme.colors.background,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
     paddingVertical: 10,
-    paddingHorizontal: 12,
-    marginBottom: 8,
-    minWidth: '18%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#262626',
+    paddingHorizontal: 16,
   },
   quickGoalCardSelected: {
-    backgroundColor: '#262626',
-    borderColor: '#CCFF00',
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
   quickGoalText: {
-    color: '#A0A0A0',
+    color: theme.colors.textSecondary,
     fontSize: 12,
-    fontWeight: '300',
+    fontWeight: '600',
   },
   quickGoalTextSelected: {
-    color: '#CCFF00',
-    fontWeight: '700',
+    color: theme.colors.background,
+    fontWeight: 'bold',
   },
-  bannerContainer: {
-    position: 'absolute',
-    top: 60,
-    left: 20,
-    right: 20,
-    backgroundColor: '#1E1E1E',
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 8,
-    zIndex: 9999,
-    borderWidth: 1.5,
-    borderColor: '#CCFF00',
+  inputContainer: {
+    marginTop: theme.spacing.xs,
   },
-  bannerContent: {
+  subLabel: {
+    color: theme.colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: theme.spacing.xs,
+  },
+  customInput: {
+    backgroundColor: theme.colors.background,
+    borderColor: theme.colors.border,
+    borderWidth: 1,
+    borderRadius: theme.borderRadius.md,
+    height: 48,
+    paddingHorizontal: theme.spacing.md,
+    color: theme.colors.text,
+    fontSize: 14,
+  },
+  motivationText: {
+    color: theme.colors.textSecondary,
+    fontSize: 13,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginVertical: theme.spacing.sm,
+  },
+  startButton: {
+    marginTop: theme.spacing.sm,
+  },
+  // Active Run styles
+  activeContainer: {
+    justifyContent: 'space-between',
+    paddingBottom: theme.spacing.xxl,
+  },
+  activeHeaderContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: theme.spacing.md,
+    marginTop: theme.spacing.sm,
   },
-  bannerIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#000000',
-    justifyContent: 'center',
+  statusIndicator: {
+    borderWidth: 1.5,
+    borderRadius: 20,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    alignSelf: 'center',
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  notificationHeaderBtn: {
+    padding: 6,
+    position: 'relative',
+  },
+  badge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: theme.colors.primary,
+  },
+  notificationBanner: {
+    position: 'absolute',
+    top: 90,
+    left: theme.spacing.md,
+    right: theme.spacing.md,
+    backgroundColor: theme.colors.cardSecondary,
+    borderColor: theme.colors.primary,
+    borderWidth: 1,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    zIndex: 99,
+  },
+  bannerText: {
+    color: theme.colors.text,
+    fontSize: 13,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  dashboardContainer: {
     alignItems: 'center',
-    marginRight: 12,
-  },
-  bannerTextContainer: {
+    justifyContent: 'center',
     flex: 1,
+    gap: theme.spacing.xl,
   },
-  bannerTitle: {
-    color: '#A0A0A0',
+  timerValue: {
+    color: theme.colors.text,
+    fontSize: 64,
+    fontWeight: 'bold',
+    letterSpacing: -1,
+  },
+  timerLabel: {
+    color: theme.colors.textSecondary,
     fontSize: 12,
-    fontWeight: '300',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginTop: -theme.spacing.sm,
+  },
+  distanceBlock: {
+    alignItems: 'center',
+    marginTop: theme.spacing.md,
+  },
+  distanceValue: {
+    color: theme.colors.primary,
+    fontSize: 36,
+    fontWeight: 'bold',
+  },
+  distanceLabel: {
+    color: theme.colors.textSecondary,
+    fontSize: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  bannerMessage: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
-    marginTop: 1,
-    fontFamily: 'System',
+  activeFooter: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  activeActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: theme.spacing.xl,
+  },
+  actionRoundButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pauseButton: {
+    backgroundColor: theme.colors.card,
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
+  },
+  stopButton: {
+    backgroundColor: theme.colors.card,
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#1E1E1E',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    maxHeight: '75%',
-    paddingBottom: 40,
-    borderTopWidth: 1.5,
-    borderTopColor: '#262626',
+    backgroundColor: theme.colors.backgroundSecondary,
+    borderTopLeftRadius: theme.borderRadius.xl,
+    borderTopRightRadius: theme.borderRadius.xl,
+    padding: theme.spacing.lg,
+    maxHeight: Dimensions.get('window').height * 0.7,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 24,
     borderBottomWidth: 1,
-    borderBottomColor: '#262626',
+    borderColor: theme.colors.border,
+    paddingBottom: theme.spacing.md,
+    marginBottom: theme.spacing.md,
   },
   modalTitle: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '900',
-    fontFamily: 'System',
+    color: theme.colors.text,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   modalCloseBtn: {
-    padding: 8,
-    backgroundColor: '#262626',
-    borderRadius: 16,
+    padding: 4,
   },
-  modalScrollContent: {
-    padding: 24,
+  modalList: {
+    gap: theme.spacing.sm,
+    paddingBottom: theme.spacing.xl,
   },
-  emptyNotifications: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-  },
-  emptyText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  emptySubtext: {
-    color: '#A0A0A0',
+  noNotificationsText: {
+    color: theme.colors.textSecondary,
     fontSize: 13,
     textAlign: 'center',
-    marginTop: 8,
-    paddingHorizontal: 20,
-    fontWeight: '300',
+    marginTop: theme.spacing.xl,
   },
   notificationItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#000000',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    borderLeftWidth: 3.5,
-    borderLeftColor: '#CCFF00',
-  },
-  notificationTimeBadge: {
-    backgroundColor: '#1E1E1E',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    marginRight: 12,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
     borderWidth: 1,
-    borderColor: '#262626',
+    borderColor: theme.colors.border,
   },
-  notificationTimeText: {
-    color: '#CCFF00',
+  notificationTime: {
+    color: theme.colors.primary,
     fontSize: 11,
     fontWeight: 'bold',
-    fontVariant: ['tabular-nums'],
+    marginBottom: 2,
   },
-  notificationItemText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '300',
-    flex: 1,
-    fontFamily: 'System',
+  notificationMessage: {
+    color: theme.colors.text,
+    fontSize: 13,
   },
 });
+
+const pad = (val: number) => val.toString().padStart(2, '0');
+
