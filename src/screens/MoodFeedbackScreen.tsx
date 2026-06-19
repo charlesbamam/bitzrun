@@ -75,7 +75,7 @@ export const MoodFeedbackScreen: React.FC<MoodFeedbackScreenProps> = ({
               <MemoryCard
                 key={card.id}
                 date={card.date}
-                title="Novo Cartão de Memória"
+                title="Corrida registrada"
                 description={card.text}
                 metrics={`${distanceKm.toFixed(2).replace('.', ',')} km em ${Math.round(durationSeconds / 60)} min`}
               />
