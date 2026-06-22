@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Platform } from 'react-native';
-import { AlertTriangle, ChevronRight } from 'lucide-react-native';
+import { AlertTriangle } from 'lucide-react-native';
+import { BitzIcon } from '../components/BitzIcon';
 import { theme } from '../theme/theme';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { AppCard } from '../components/AppCard';
@@ -154,7 +155,7 @@ export const StopReasonScreen: React.FC<StopReasonScreenProps> = ({ onSave, onSk
         {/* Alerta preventivo de saúde */}
         {showHealthWarning && (
           <View style={styles.warningContainer}>
-            <AlertTriangle size={18} color={theme.colors.error} style={styles.warningIcon} />
+            <BitzIcon icon={AlertTriangle} size={18} color={theme.colors.error} style={styles.warningIcon} />
             <Text style={styles.warningText}>
               Se o desconforto for forte ou persistente, pare e procure orientação profissional.
             </Text>

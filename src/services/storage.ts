@@ -66,6 +66,7 @@ const KEYS = {
   PROFILE: 'bitzrun_profile',
   ACHIEVEMENTS: 'bitzrun_achievements',
   MEMORY_CARDS: 'bitzrun_memory_cards',
+  LOGGED_IN: 'bitzrun_logged_in',
 };
 
 // Funções Auxiliares
@@ -432,10 +433,26 @@ export const StorageService = {
     };
   },
 
+  async isLoggedIn(): Promise<boolean> {
+    try {
+      const val = await AsyncStorage.getItem(KEYS.LOGGED_IN);
+      return val === 'true';
+    } catch {
+      return false;
+    }
+  },
+
+  async setLoggedIn(val: boolean): Promise<void> {
+    try {
+      await AsyncStorage.setItem(KEYS.LOGGED_IN, val ? 'true' : 'false');
+    } catch {}
+  },
+
   async clearAll(): Promise<void> {
     await AsyncStorage.removeItem(KEYS.RUNS);
     await AsyncStorage.removeItem(KEYS.PROFILE);
     await AsyncStorage.removeItem(KEYS.ACHIEVEMENTS);
     await AsyncStorage.removeItem(KEYS.MEMORY_CARDS);
+    await AsyncStorage.removeItem(KEYS.LOGGED_IN);
   }
 };

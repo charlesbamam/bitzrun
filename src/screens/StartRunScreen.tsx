@@ -1,12 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, TextInput, Alert, BackHandler, Modal, ScrollView, Dimensions } from 'react-native';
-import { X, Play, Pause, Square, Bell, Flame } from 'lucide-react-native';
+import { StyleSheet, Text, View, TouchableOpacity, TextInput, Alert, BackHandler, Modal, ScrollView, Dimensions, Vibration, Animated, Easing } from 'react-native';
+import { X, Play, Pause, Square, Bell, Flame, Sparkles, Trophy } from 'lucide-react-native';
 import { theme } from '../theme/theme';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { AppCard } from '../components/AppCard';
 import { AppButton } from '../components/AppButton';
 import { MoodSelector } from '../components/MoodSelector';
 import { AppHeader } from '../components/AppHeader';
+import { BitzIcon } from '../components/BitzIcon';
+
+const BEYOND_GOAL_MESSAGES = [
+  "Você já venceu o treino. Agora está construindo confiança.",
+  "Tudo agora é evolução além da meta.",
+  "Você não precisava provar nada. Mesmo assim, escolheu continuar.",
+  "Continue no seu ritmo. Você está indo além.",
+  "Hoje você está reforçando o hábito."
+];
 
 export interface RunningNotification {
   id: string;
@@ -34,6 +43,12 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
   const [seconds, setSeconds] = useState<number>(0);
   const [distance, setDistance] = useState<number>(0);
 
+  // Estados de Celebração e Modo Além da Meta
+  const [hasCelebrated, setHasCelebrated] = useState<boolean>(false);
+  const [showCelebrationModal, setShowCelebrationModal] = useState<boolean>(false);
+  const [isBeyondGoalMode, setIsBeyondGoalMode] = useState<boolean>(false);
+  const [beyondGoalMessage, setBeyondGoalMessage] = useState<string>('');
+
   // Estados de Notificações Motivacionais
   const [notifications, setNotifications] = useState<RunningNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
@@ -46,6 +61,7 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
   const distanceRef = useRef<number>(0);
   const triggeredAlertsRef = useRef<string[]>([]);
   const notificationsRef = useRef<RunningNotification[]>([]);
+  const hasCelebratedRef = useRef<boolean>(false);
 
   // Sincronizar referências com os estados
   secondsRef.current = seconds;
@@ -141,6 +157,20 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
         setDistance(prev => {
           const nextDist = prev + randomIncrement;
           checkDistanceTriggers(nextDist);
+          
+          // Celebração: quando atinge ou ultrapassa a meta e ainda não celebrou
+          if (nextDist >= targetKm && !hasCelebratedRef.current) {
+            hasCelebratedRef.current = true;
+            setHasCelebrated(true);
+            setShowCelebrationModal(true);
+            try {
+              // Vibração para chamar atenção (padrão curto-longo-curto)
+              Vibration.vibrate([0, 150, 100, 400]);
+            } catch (e) {
+              console.log('Sem suporte a vibração:', e);
+            }
+          }
+          
           return nextDist;
         });
       }, 1000);
@@ -155,7 +185,7 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
         clearInterval(timerRef.current);
       }
     };
-  }, [status]);
+  }, [status, targetKm]);
 
   const handleStart = () => {
     let parsedKm = 1.0;
@@ -185,9 +215,24 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
     }
 
     setTargetKm(parsedKm);
+    
+    // Limpar estados de metas da corrida anterior
+    setHasCelebrated(false);
+    hasCelebratedRef.current = false;
+    setShowCelebrationModal(false);
+    setIsBeyondGoalMode(false);
+    setBeyondGoalMessage('');
+
     setStatus('running');
     setSeconds(0);
     setDistance(0);
+  };
+
+  const handleContinueBeyond = () => {
+    const randomMsg = BEYOND_GOAL_MESSAGES[Math.floor(Math.random() * BEYOND_GOAL_MESSAGES.length)];
+    setBeyondGoalMessage(randomMsg);
+    setIsBeyondGoalMode(true);
+    setShowCelebrationModal(false);
   };
 
   const handlePauseToggle = () => {
@@ -297,6 +342,41 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
 
   const progressRatio = getProgressRatio();
 
+  const scaleAnim = useRef(new Animated.Value(0.3)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (showCelebrationModal) {
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          tension: 40,
+          friction: 6,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 350,
+          useNativeDriver: true,
+        })
+      ]).start();
+    } else {
+      scaleAnim.setValue(0.3);
+      opacityAnim.setValue(0);
+    }
+  }, [showCelebrationModal]);
+
+  const getExtraDistanceText = () => {
+    const extra = distance - targetKm;
+    if (extra <= 0) return '+0 m';
+    if (extra < 1.0) {
+      const meters = Math.round(extra * 1000);
+      return `+${meters} m`;
+    } else {
+      return `+${extra.toFixed(1).replace('.', ',')} km`;
+    }
+  };
+
   // Tela de Corrida Ativa (Running / Paused)
   return (
     <ScreenContainer style={styles.activeContainer}>
@@ -320,7 +400,7 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
           onPress={handleOpenNotifications}
           activeOpacity={0.7}
         >
-          <Bell size={20} color={theme.colors.text} />
+          <BitzIcon icon={Bell} size={20} color={theme.colors.text} />
           {unreadCount > 0 && <View style={styles.badge} />}
         </TouchableOpacity>
       </View>
@@ -337,24 +417,45 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
         <Text style={styles.timerValue}>{formatTime(seconds)}</Text>
         <Text style={styles.timerLabel}>Tempo acumulado</Text>
 
-        <View style={styles.distanceBlock}>
+        <View style={[
+          styles.distanceBlock,
+          isBeyondGoalMode && styles.distanceBlockBeyond
+        ]}>
           <Text style={styles.distanceValue}>{distance.toFixed(2).replace('.', ',')} km</Text>
-          <Text style={styles.distanceLabel}>Distância simulada</Text>
+          <Text style={styles.distanceLabel}>{isBeyondGoalMode ? 'Progresso Total' : 'Distância simulada'}</Text>
         </View>
 
-        {/* Barra de Progresso e Meta */}
-        <View style={styles.progressContainer}>
-          <View style={styles.progressHeader}>
-            <Text style={styles.progressLabel}>Progresso da Meta</Text>
-            <Text style={styles.progressMetaValue}>
-              Meta: {targetKm.toFixed(1).replace('.', ',')} km
-            </Text>
+        {/* Barra de Progresso e Meta / Modo Além da Meta */}
+        {isBeyondGoalMode ? (
+          <View style={[styles.progressContainer, styles.beyondContainer]}>
+            <View style={styles.beyondHeader}>
+              <View style={styles.beyondBadge}>
+                <Text style={styles.beyondTitle}>MODO ALÉM DA META</Text>
+              </View>
+              <Text style={styles.beyondTargetLabel}>Meta batida: {targetKm.toFixed(1).replace('.', ',')} km</Text>
+            </View>
+            <View style={styles.beyondMetersBlock}>
+              <Text style={styles.beyondMetersText}>{getExtraDistanceText()}</Text>
+              <Text style={styles.beyondMetersSubtext}>de evolução extra</Text>
+            </View>
+            {beyondGoalMessage ? (
+              <Text style={styles.beyondQuoteText}>“{beyondGoalMessage}”</Text>
+            ) : null}
           </View>
-          <View style={styles.progressBarBg}>
-            <View style={[styles.progressBarFill, { width: `${progressRatio * 100}%` }]} />
+        ) : (
+          <View style={styles.progressContainer}>
+            <View style={styles.progressHeader}>
+              <Text style={styles.progressLabel}>Progresso da Meta</Text>
+              <Text style={styles.progressMetaValue}>
+                Meta: {targetKm.toFixed(1).replace('.', ',')} km
+              </Text>
+            </View>
+            <View style={styles.progressBarBg}>
+              <View style={[styles.progressBarFill, { width: `${progressRatio * 100}%` }]} />
+            </View>
+            <Text style={styles.simulationText}>Simulação de treino ativa localmente</Text>
           </View>
-          <Text style={styles.simulationText}>Simulação de treino ativa localmente</Text>
-        </View>
+        )}
       </View>
 
       {/* Rodapé com Ações */}
@@ -366,7 +467,7 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
               onPress={handlePauseToggle}
               activeOpacity={0.8}
             >
-              <Pause size={24} color={theme.colors.text} />
+              <BitzIcon icon={Pause} size={24} color={theme.colors.text} />
             </TouchableOpacity>
           ) : (
             // Alto contraste para o botão Play/Continuar quando pausado (Verde-limão)
@@ -375,7 +476,7 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
               onPress={handlePauseToggle}
               activeOpacity={0.8}
             >
-              <Play size={24} color={theme.colors.background} fill={theme.colors.background} />
+              <BitzIcon icon={Play} size={24} color={theme.colors.background} fill={theme.colors.background} />
             </TouchableOpacity>
           )}
 
@@ -384,10 +485,49 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
             onPress={handleEndPress}
             activeOpacity={0.8}
           >
-            <Square size={20} color={theme.colors.error} fill={theme.colors.error} />
+            <BitzIcon icon={Square} size={20} color={theme.colors.error} fill={theme.colors.error} />
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Modal de Celebração de Meta Alcançada */}
+      <Modal visible={showCelebrationModal} animationType="fade" transparent>
+        <View style={styles.celebrationOverlay}>
+          <Animated.View style={[
+            styles.celebrationBox,
+            {
+              transform: [{ scale: scaleAnim }],
+              opacity: opacityAnim
+            }
+          ]}>
+            <View style={styles.celebrationIconContainer}>
+              <BitzIcon icon={Trophy} size={42} color={theme.colors.primary} />
+            </View>
+            
+            <Text style={styles.celebrationTitle}>Meta alcançada!</Text>
+            
+            <Text style={styles.celebrationSubtitle}>
+              Você cumpriu o combinado de hoje. Agora, tudo que vier é evolução.
+            </Text>
+
+            <View style={styles.celebrationActions}>
+              <AppButton
+                title="Continuar e ir além"
+                onPress={handleContinueBeyond}
+                variant="primary"
+                style={styles.celebrationBtn}
+              />
+              <TouchableOpacity
+                style={styles.celebrationSecondaryBtn}
+                onPress={handleEndPress}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.celebrationSecondaryText}>Finalizar corrida</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
 
       {/* Modal de Notificações */}
       <Modal visible={isModalVisible} animationType="slide" transparent>
@@ -396,7 +536,7 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Mensagens Motivacionais</Text>
               <TouchableOpacity onPress={() => setIsModalVisible(false)} style={styles.modalCloseBtn}>
-                <X size={20} color={theme.colors.text} />
+                <BitzIcon icon={X} size={20} color={theme.colors.text} />
               </TouchableOpacity>
             </View>
 
@@ -717,6 +857,125 @@ const styles = StyleSheet.create({
   notificationMessage: {
     color: theme.colors.text,
     fontSize: 13,
+  },
+  distanceBlockBeyond: {
+    borderColor: theme.colors.primary,
+    borderWidth: 1.5,
+    borderRadius: theme.borderRadius.lg,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.xl,
+    backgroundColor: 'rgba(204, 255, 0, 0.05)',
+  },
+  beyondContainer: {
+    backgroundColor: '#161616',
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: '#262626',
+    alignItems: 'center',
+  },
+  beyondHeader: {
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: theme.spacing.sm,
+  },
+  beyondBadge: {
+    backgroundColor: 'rgba(204, 255, 0, 0.15)',
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  beyondTitle: {
+    color: theme.colors.primary,
+    fontSize: 10,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  beyondTargetLabel: {
+    color: theme.colors.textSecondary,
+    fontSize: 12,
+  },
+  beyondMetersBlock: {
+    alignItems: 'center',
+    marginBottom: theme.spacing.xs,
+  },
+  beyondMetersText: {
+    color: theme.colors.primary,
+    fontSize: 28,
+    fontWeight: 'bold',
+  },
+  beyondMetersSubtext: {
+    color: theme.colors.textSecondary,
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  beyondQuoteText: {
+    color: theme.colors.text,
+    fontSize: 12,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    paddingHorizontal: theme.spacing.sm,
+    lineHeight: 16,
+  },
+  celebrationOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.xl,
+  },
+  celebrationBox: {
+    backgroundColor: theme.colors.backgroundSecondary,
+    borderRadius: theme.borderRadius.xl,
+    padding: theme.spacing.xl,
+    width: '100%',
+    maxWidth: 340,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: theme.colors.primary,
+  },
+  celebrationIconContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: 'rgba(204, 255, 0, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+  },
+  celebrationTitle: {
+    color: theme.colors.text,
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: theme.spacing.xs,
+  },
+  celebrationSubtitle: {
+    color: theme.colors.textSecondary,
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: theme.spacing.lg,
+  },
+  celebrationActions: {
+    width: '100%',
+    gap: theme.spacing.sm,
+  },
+  celebrationBtn: {
+    width: '100%',
+  },
+  celebrationSecondaryBtn: {
+    width: '100%',
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  celebrationSecondaryText: {
+    color: theme.colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '600',
   },
 });
 

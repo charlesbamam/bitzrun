@@ -15,6 +15,7 @@ import { MoodFeedbackScreen } from './screens/MoodFeedbackScreen';
 import { AchievementsScreen } from './screens/AchievementsScreen';
 import { JourneyScreen } from './screens/JourneyScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
+import { SplashScreen } from './screens/SplashScreen';
 
 // Componentes
 import { BottomTabs } from './components/BottomTabs';
@@ -25,6 +26,7 @@ type FlowType = 'setup' | 'running' | 'end_run' | 'stop_reason' | 'mood_feedback
 export default function AppRoot() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [activeFlow, setActiveFlow] = useState<FlowType>(null);
+  const [showSplash, setShowSplash] = useState(true);
 
   // Fluxo: Login → animação → Dashboard
   // isAuthenticated começa false → app abre no Login
@@ -60,11 +62,15 @@ export default function AppRoot() {
       const loadedAchievements = await StorageService.getAchievements();
       const loadedMemoryCards = await StorageService.getMemoryCards();
       const loadedProfile = await StorageService.getProfile();
+      const logged = await StorageService.isLoggedIn();
 
       setRuns(loadedRuns);
       setAchievements(loadedAchievements);
       setMemoryCards(loadedMemoryCards);
       setProfile(loadedProfile);
+      if (logged) {
+        setIsAuthenticated(true);
+      }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     }
@@ -85,6 +91,7 @@ export default function AppRoot() {
     try {
       const updatedProfile = await StorageService.updateProfileName(pendingUserName);
       setProfile(updatedProfile);
+      await StorageService.setLoggedIn(true);
       setIsAuthenticated(true);
       setIsTransitioning(false);
       setActiveTab('dashboard');
@@ -114,7 +121,8 @@ export default function AppRoot() {
         {
           text: 'Sair',
           style: 'destructive',
-          onPress: () => {
+          onPress: async () => {
+            await StorageService.setLoggedIn(false);
             setIsAuthenticated(false);
             setIsTransitioning(false);
             setAuthMode('login');
@@ -212,6 +220,16 @@ export default function AppRoot() {
 
   // ---- RENDER ----
 
+  // 0. Splash screen de inicialização
+  if (showSplash) {
+    return (
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="#000000" />
+        <SplashScreen onFinish={() => setShowSplash(false)} />
+      </View>
+    );
+  }
+
   // 1. Animação curta após login/cadastro
   if (isTransitioning) {
     return (
@@ -277,6 +295,7 @@ export default function AppRoot() {
           durationSeconds={tempRunData.durationSeconds}
           distanceKm={tempRunData.distanceKm}
           runs={runs}
+          targetDistanceKm={tempRunData.targetDistanceKm}
           onNext={handleProceedFromEndRun}
         />
       );
@@ -325,8 +344,8 @@ export default function AppRoot() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#000000" />
 
-      {/* Botão de reset para testes */}
-      {showTabBar && (
+      {/* Botão de reset para testes (exibido apenas em desenvolvimento) */}
+      {__DEV__ && showTabBar && (
         <TouchableOpacity style={styles.resetButton} onPress={handleResetData} activeOpacity={0.7}>
           <RotateCcw size={14} color="#A0A0A0" />
           <Text style={styles.resetButtonText}>Limpar testes</Text>

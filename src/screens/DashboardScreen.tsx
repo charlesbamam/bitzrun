@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, TextInput, Alert, Image, Modal } from 'react-native';
-import { Flame, Check, Edit2, User, Trophy, Calendar, Zap, AlertCircle } from 'lucide-react-native';
+import { Flame, Check, Edit2, UserRound, Trophy, Target, Clock, AlertCircle } from 'lucide-react-native';
 import { StorageService, UserProfile, Run } from '../services/storage';
 import { theme } from '../theme/theme';
 import { ScreenContainer } from '../components/ScreenContainer';
@@ -9,6 +9,7 @@ import { AppButton } from '../components/AppButton';
 import { MetricCard } from '../components/MetricCard';
 import { ProgressRing } from '../components/ProgressRing';
 import { SectionTitle } from '../components/SectionTitle';
+import { BitzIcon } from '../components/BitzIcon';
 
 interface DashboardScreenProps {
   onStartRunPress: () => void;
@@ -129,7 +130,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 placeholderTextColor={theme.colors.textSecondary}
               />
               <TouchableOpacity style={styles.iconButton} onPress={handleSaveName}>
-                <Check size={20} color={theme.colors.primary} />
+                <BitzIcon icon={Check} size={20} color={theme.colors.primary} />
               </TouchableOpacity>
             </View>
           ) : (
@@ -137,7 +138,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               <Text style={styles.greetingText}>{greeting},</Text>
               <View style={styles.nameRow}>
                 <Text style={styles.nameText}>{profile.name}.</Text>
-                <Edit2 size={14} color={theme.colors.textSecondary} style={styles.editIcon} />
+                <BitzIcon icon={Edit2} size={14} color={theme.colors.textSecondary} />
               </View>
             </TouchableOpacity>
           )}
@@ -147,7 +148,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           {profile.avatarUri ? (
             <Image source={{ uri: profile.avatarUri }} style={styles.avatarImage} />
           ) : (
-            <User size={20} color={theme.colors.primary} strokeWidth={1.5} />
+            <BitzIcon icon={UserRound} size={20} color={theme.colors.primary} />
           )}
         </TouchableOpacity>
       </View>
@@ -155,7 +156,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       {/* Card Principal: CTA Diária */}
       <AppCard style={styles.mainCtaCard}>
         <View style={styles.ctaBadge}>
-          <Flame size={12} color={theme.colors.background} strokeWidth={2.5} />
+          <BitzIcon icon={Flame} size={12} color={theme.colors.background} strokeWidth={2.5} />
           <Text style={styles.ctaBadgeText}>Foco de hoje</Text>
         </View>
         <Text style={styles.ctaCardTitle}>{fraseMotivacional}</Text>
@@ -202,13 +203,13 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             title="Meta da semana"
             value={runsThisWeekCount}
             subtitle={`Meta: ${weeklyGoal} corridas`}
-            icon={<Calendar size={16} color={theme.colors.textSecondary} />}
+            icon={<BitzIcon icon={Target} size={16} color={theme.colors.textSecondary} />}
           />
           <MetricCard
             title="Sequência Atual"
             value={profile.streak}
             subtitle={profile.streak > 0 ? "Em ritmo!" : "Foco em começar"}
-            icon={<Flame size={16} color={theme.colors.textSecondary} />}
+            icon={<BitzIcon icon={Flame} size={16} color={theme.colors.textSecondary} />}
           />
         </View>
         <View style={styles.metricsRow}>
@@ -216,13 +217,13 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             title="Distância Total"
             value={`${totalDistance.toFixed(1)} km`}
             subtitle="Acumulado"
-            icon={<Trophy size={16} color={theme.colors.textSecondary} />}
+            icon={<BitzIcon icon={Trophy} size={16} color={theme.colors.textSecondary} />}
           />
           <MetricCard
             title="Último Treino"
             value={lastRun ? `${lastRun.distance.toFixed(1)} km` : "—"}
             subtitle={lastRun ? "Corrida salva" : "Nenhum registro"}
-            icon={<Zap size={16} color={theme.colors.textSecondary} />}
+            icon={<BitzIcon icon={Clock} size={16} color={theme.colors.textSecondary} />}
           />
         </View>
       </View>
@@ -230,9 +231,9 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       {/* Estado Vazio de Corrida se não houver histórico */}
       {(runs || []).length === 0 && (
         <AppCard variant="outlined" style={styles.emptyStateCard}>
-          <AlertCircle size={20} color={theme.colors.textSecondary} style={styles.emptyIcon} />
+          <BitzIcon icon={AlertCircle} size={20} color={theme.colors.textSecondary} />
           <Text style={styles.emptyText}>
-            Sua primeira corrida aparecerá aqui. Dê o primeiro passo para construir sua consistência!
+            Você ainda está no começo. E tudo bem. A primeira vitória é aparecer. Dê o primeiro passo hoje, sem pressão.
           </Text>
         </AppCard>
       )}

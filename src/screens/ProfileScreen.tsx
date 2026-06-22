@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, TextInput, ScrollView, Alert, Image } from 'react-native';
-import { ChevronLeft, LogOut, User, Activity, Clock, Award, Flame } from 'lucide-react-native';
+import { ChevronLeft, UserRound, Activity, Clock, Trophy, Flame, Route } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { UserProfile, Run, StorageService } from '../services/storage';
 import { theme } from '../theme/theme';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { AppCard } from '../components/AppCard';
 import { AppButton } from '../components/AppButton';
+import { BitzIcon } from '../components/BitzIcon';
 
 interface ProfileScreenProps {
   profile: UserProfile;
@@ -105,7 +106,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       {/* Cabeçalho */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <ChevronLeft size={24} color={theme.colors.text} />
+          <BitzIcon icon={ChevronLeft} size={24} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Meu Perfil</Text>
         <View style={styles.headerSpacer} />
@@ -118,7 +119,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             {profile.avatarUri ? (
               <Image source={{ uri: profile.avatarUri }} style={styles.avatarImage} />
             ) : (
-              <User size={40} color={theme.colors.primary} strokeWidth={1.5} />
+              <BitzIcon icon={UserRound} size={40} color={theme.colors.primary} />
             )}
           </TouchableOpacity>
           <TouchableOpacity onPress={handleSelectImage} activeOpacity={0.7} style={styles.avatarLink}>
@@ -151,7 +152,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
           <View style={styles.badgeRow}>
             <View style={styles.streakBadge}>
-              <Flame size={14} color={theme.colors.background} strokeWidth={2.5} />
+              <BitzIcon icon={Flame} size={14} color={theme.colors.background} strokeWidth={2.5} />
               <Text style={styles.streakText}>{profile.streak} dias de ofensiva</Text>
             </View>
           </View>
@@ -161,25 +162,25 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         <Text style={styles.sectionTitle}>Estatísticas Gerais</Text>
         <View style={styles.statsGrid}>
           <AppCard style={styles.statCard}>
-            <Activity size={20} color={theme.colors.primary} strokeWidth={1.5} style={styles.statIcon} />
+            <BitzIcon icon={Route} size={20} color={theme.colors.primary} style={styles.statIcon} />
             <Text style={styles.statVal}>{totalDistance.toFixed(1).replace('.', ',')} km</Text>
             <Text style={styles.statLbl}>Distância Total</Text>
           </AppCard>
 
           <AppCard style={styles.statCard}>
-            <Clock size={20} color={theme.colors.primary} strokeWidth={1.5} style={styles.statIcon} />
+            <BitzIcon icon={Clock} size={20} color={theme.colors.primary} style={styles.statIcon} />
             <Text style={styles.statVal}>{formatTotalTime(totalDurationSeconds)}</Text>
             <Text style={styles.statLbl}>Tempo Total</Text>
           </AppCard>
 
           <AppCard style={styles.statCard}>
-            <Award size={20} color={theme.colors.primary} strokeWidth={1.5} style={styles.statIcon} />
+            <BitzIcon icon={Trophy} size={20} color={theme.colors.primary} style={styles.statIcon} />
             <Text style={styles.statVal}>{totalRuns}</Text>
             <Text style={styles.statLbl}>Corridas Feitas</Text>
           </AppCard>
 
           <AppCard style={styles.statCard}>
-            <Flame size={20} color={theme.colors.primary} strokeWidth={1.5} style={styles.statIcon} />
+            <BitzIcon icon={Activity} size={20} color={theme.colors.primary} style={styles.statIcon} />
             <Text style={styles.statVal}>{getAveragePace()} /km</Text>
             <Text style={styles.statLbl}>Pace Médio</Text>
           </AppCard>
@@ -233,6 +234,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           style={styles.logoutButton}
           textStyle={styles.logoutText}
         />
+
+        {/* Identificação de Versão/Build */}
+        <View style={styles.versionContainer}>
+          <Text style={styles.versionText}>Bitzrun v0.1.0 (Teste Público 01)</Text>
+          <Text style={styles.buildDateText}>Build: 22/06/2026</Text>
+        </View>
       </View>
     </ScreenContainer>
   );
@@ -462,5 +469,21 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     color: theme.colors.error,
+  },
+  versionContainer: {
+    alignItems: 'center',
+    marginTop: theme.spacing.xl,
+    marginBottom: theme.spacing.sm,
+    opacity: 0.5,
+  },
+  versionText: {
+    color: theme.colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  buildDateText: {
+    color: theme.colors.textSecondary,
+    fontSize: 10,
+    marginTop: 2,
   },
 });

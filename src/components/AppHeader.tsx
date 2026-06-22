@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { ChevronLeft } from 'lucide-react-native';
 import { theme } from '../theme/theme';
+import { BitzIcon } from './BitzIcon';
 
 interface AppHeaderProps {
   title: string;
@@ -21,7 +22,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       <View style={styles.topRow}>
         {onBack ? (
           <TouchableOpacity onPress={onBack} activeOpacity={0.7} style={styles.backButton}>
-            <ChevronLeft size={24} color={theme.colors.text} />
+            <BitzIcon icon={ChevronLeft} size={24} color={theme.colors.text} />
           </TouchableOpacity>
         ) : (
           <View style={styles.placeholder} />

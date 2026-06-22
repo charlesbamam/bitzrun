@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, Alert, TouchableOpacity } from 'react-native';
-import { User, Flame } from 'lucide-react-native';
+import { UserRound } from 'lucide-react-native';
 import { theme } from '../theme/theme';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { AppButton } from '../components/AppButton';
 import { AppCard } from '../components/AppCard';
+import { BitzIcon } from '../components/BitzIcon';
+import { BitzLogo } from '../components/BitzLogo';
 
 interface RegisterScreenProps {
   onSuccess: (userName: string) => void;
@@ -40,10 +42,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ onSuccess, onNav
       <View style={styles.content}>
         {/* Header */}
         <View style={styles.logoHeader}>
-          <View style={styles.logoCircle}>
-            <Flame size={32} color={theme.colors.primary} strokeWidth={1.5} />
-          </View>
-          <Text style={styles.logoText}>Bitzrun</Text>
+          <BitzLogo width={180} height={59} showBackground={true} />
         </View>
 
         {/* Headline */}
@@ -61,7 +60,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ onSuccess, onNav
           <View style={styles.inputWrapper}>
             <Text style={styles.label}>Como prefere ser chamado?</Text>
             <View style={[styles.inputContainer, nameFocused && styles.inputContainerFocused]}>
-              <User size={18} color={nameFocused ? theme.colors.primary : theme.colors.textSecondary} strokeWidth={1.5} style={styles.inputIcon} />
+              <BitzIcon icon={UserRound} size={18} color={nameFocused ? theme.colors.primary : theme.colors.textSecondary} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Ex: Carlos, Ana, Corredor"

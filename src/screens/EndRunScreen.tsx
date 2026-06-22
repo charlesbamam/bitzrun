@@ -1,17 +1,19 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Sparkles, Calendar, Clock, Compass, Heart } from 'lucide-react-native';
+import { Sparkles, CalendarDays, Clock, Route, Heart } from 'lucide-react-native';
 import { Run, formatFriendlyDate, getMoodText } from '../services/storage';
 import { theme } from '../theme/theme';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { AppCard } from '../components/AppCard';
 import { AppButton } from '../components/AppButton';
 import { MetricCard } from '../components/MetricCard';
+import { BitzIcon } from '../components/BitzIcon';
 
 interface EndRunScreenProps {
   durationSeconds: number;
   distanceKm: number;
   runs: Run[];
+  targetDistanceKm?: number;
   onNext: () => void;
 }
 
@@ -19,10 +21,17 @@ export const EndRunScreen: React.FC<EndRunScreenProps> = ({
   durationSeconds,
   distanceKm,
   runs,
+  targetDistanceKm,
   onNext,
 }) => {
+  const isBeyond = targetDistanceKm ? (distanceKm >= targetDistanceKm) : false;
+
   // Lógica de validação emocional e comparativo narrativo
   const getComparisonMessage = () => {
+    if (isBeyond) {
+      return 'Esse é o tipo de vitória que constrói constância.';
+    }
+
     if (runs.length === 0) {
       return 'Você deu o primeiro passo. Isso é o mais importante.';
     }
@@ -42,6 +51,17 @@ export const EndRunScreen: React.FC<EndRunScreenProps> = ({
     return 'Você apareceu e garantiu seu dia. A consistência reside na presença.';
   };
 
+  const getExtraText = () => {
+    if (!targetDistanceKm) return '+0 m';
+    const extra = distanceKm - targetDistanceKm;
+    if (extra <= 0) return '+0 m';
+    if (extra < 1.0) {
+      return `+${Math.round(extra * 1000)} m`;
+    } else {
+      return `+${extra.toFixed(1).replace('.', ',')} km`;
+    }
+  };
+
   const formatTime = (totalSecs: number) => {
     const mins = Math.floor(totalSecs / 60);
     const secs = totalSecs % 60;
@@ -55,10 +75,12 @@ export const EndRunScreen: React.FC<EndRunScreenProps> = ({
     <ScreenContainer style={styles.container}>
       <View style={styles.header}>
         <View style={styles.sparkleIconCircle}>
-          <Sparkles size={28} color={theme.colors.primary} strokeWidth={1.5} />
+          <BitzIcon icon={Sparkles} size={28} color={theme.colors.primary} />
         </View>
-        <Text style={styles.title}>Corrida registrada</Text>
-        <Text style={styles.headline}>Uma corrida curta ainda conta.</Text>
+        <Text style={styles.title}>{isBeyond ? 'Você foi além.' : 'Corrida registrada'}</Text>
+        <Text style={styles.headline}>
+          {isBeyond ? 'Hoje você não apenas apareceu. Você avançou.' : 'Uma corrida curta ainda conta.'}
+        </Text>
         <Text style={styles.subtitle}>{getComparisonMessage()}</Text>
       </View>
 
@@ -67,23 +89,43 @@ export const EndRunScreen: React.FC<EndRunScreenProps> = ({
           <MetricCard
             title="Distância"
             value={`${distanceKm.toFixed(2).replace('.', ',')} km`}
-            icon={<Compass size={16} color={theme.colors.textSecondary} />}
+            icon={<BitzIcon icon={Route} size={16} color={theme.colors.textSecondary} />}
           />
           <MetricCard
             title="Tempo"
             value={formatTime(durationSeconds)}
-            icon={<Clock size={16} color={theme.colors.textSecondary} />}
+            icon={<BitzIcon icon={Clock} size={16} color={theme.colors.textSecondary} />}
           />
         </View>
 
-        <AppCard variant="secondary" style={styles.detailsCard}>
+        {isBeyond && targetDistanceKm ? (
+          <AppCard variant="secondary" style={styles.beyondSummaryCard}>
+            <Text style={styles.beyondSummaryTitle}>Métricas da Superação</Text>
+            <View style={styles.beyondSummaryRow}>
+              <Text style={styles.beyondSummaryLabel}>Meta definida:</Text>
+              <Text style={styles.beyondSummaryValue}>{targetDistanceKm.toFixed(1).replace('.', ',')} km</Text>
+            </View>
+            <View style={styles.beyondSummaryDivider} />
+            <View style={styles.beyondSummaryRow}>
+              <Text style={styles.beyondSummaryLabel}>Corrida total:</Text>
+              <Text style={styles.beyondSummaryValue}>{distanceKm.toFixed(2).replace('.', ',')} km</Text>
+            </View>
+            <View style={styles.beyondSummaryDivider} />
+            <View style={styles.beyondSummaryRow}>
+              <Text style={styles.beyondSummaryLabel}>Extra:</Text>
+              <Text style={[styles.beyondSummaryValue, { color: theme.colors.primary }]}>{getExtraText()}</Text>
+            </View>
+          </AppCard>
+        ) : null}
+
+        <AppCard variant={isBeyond ? 'secondary' : 'secondary'} style={styles.detailsCard}>
           <View style={styles.detailItem}>
-            <Calendar size={16} color={theme.colors.textSecondary} style={styles.detailIcon} />
+            <BitzIcon icon={CalendarDays} size={16} color={theme.colors.textSecondary} style={styles.detailIcon} />
             <Text style={styles.detailText}>{formatFriendlyDate(new Date().toISOString())}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.detailItem}>
-            <Heart size={16} color={theme.colors.textSecondary} style={styles.detailIcon} />
+            <BitzIcon icon={Heart} size={16} color={theme.colors.textSecondary} style={styles.detailIcon} />
             <Text style={styles.detailText}>
               Humor inicial: {getMoodText(lastRunMoodBefore)}
             </Text>
@@ -179,5 +221,37 @@ const styles = StyleSheet.create({
   },
   nextBtn: {
     width: '100%',
+  },
+  beyondSummaryCard: {
+    padding: theme.spacing.md,
+    gap: theme.spacing.xs,
+    borderWidth: 1,
+    borderColor: 'rgba(204, 255, 0, 0.3)',
+  },
+  beyondSummaryTitle: {
+    color: theme.colors.text,
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: theme.spacing.xs,
+  },
+  beyondSummaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 2,
+  },
+  beyondSummaryLabel: {
+    color: theme.colors.textSecondary,
+    fontSize: 13,
+  },
+  beyondSummaryValue: {
+    color: theme.colors.text,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  beyondSummaryDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    marginVertical: 4,
   },
 });

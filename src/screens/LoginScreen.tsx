@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
-import { Flame, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react-native';
+import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react-native';
 import { theme } from '../theme/theme';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { AppButton } from '../components/AppButton';
 import { AppCard } from '../components/AppCard';
+import { BitzIcon } from '../components/BitzIcon';
+import { BitzLogo } from '../components/BitzLogo';
 
 interface LoginScreenProps {
   onSuccess: (userName: string) => void;
@@ -42,12 +44,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess, onNavigateT
   return (
     <ScreenContainer scrollable avoidKeyboard>
       <View style={styles.content}>
-        {/* Logo/Icon Circle */}
+        {/* Logo */}
         <View style={styles.logoHeader}>
-          <View style={styles.logoCircle}>
-            <Flame size={32} color={theme.colors.primary} strokeWidth={1.5} />
-          </View>
-          <Text style={styles.logoText}>Bitzrun</Text>
+          <BitzLogo width={180} height={59} showBackground={true} />
         </View>
 
         {/* Headline & Subtitle */}
@@ -148,7 +147,7 @@ const AnimatedLoginForm: React.FC<LoginFormProps> = ({
       <View style={styles.inputWrapper}>
         <Text style={styles.label}>E-mail</Text>
         <View style={[styles.inputContainer, emailFocused && styles.inputContainerFocused]}>
-          <Mail size={18} color={emailFocused ? theme.colors.primary : theme.colors.textSecondary} strokeWidth={1.5} style={styles.inputIcon} />
+          <BitzIcon icon={Mail} size={18} color={emailFocused ? theme.colors.primary : theme.colors.textSecondary} style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             placeholder="seuemail@exemplo.com"
@@ -168,7 +167,7 @@ const AnimatedLoginForm: React.FC<LoginFormProps> = ({
       <View style={styles.inputWrapper}>
         <Text style={styles.label}>Senha</Text>
         <View style={[styles.inputContainer, passwordFocused && styles.inputContainerFocused]}>
-          <Lock size={18} color={passwordFocused ? theme.colors.primary : theme.colors.textSecondary} strokeWidth={1.5} style={styles.inputIcon} />
+          <BitzIcon icon={Lock} size={18} color={passwordFocused ? theme.colors.primary : theme.colors.textSecondary} style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             placeholder="Digite sua senha"
@@ -182,7 +181,7 @@ const AnimatedLoginForm: React.FC<LoginFormProps> = ({
             onBlur={() => setPasswordFocused(false)}
           />
           <TouchableOpacity onPress={() => setSecureText(!secureText)} style={styles.eyeBtn} activeOpacity={0.7}>
-            {secureText ? <Eye size={18} color={theme.colors.textSecondary} strokeWidth={1.5} /> : <EyeOff size={18} color={theme.colors.textSecondary} strokeWidth={1.5} />}
+            {secureText ? <BitzIcon icon={Eye} size={18} color={theme.colors.textSecondary} /> : <BitzIcon icon={EyeOff} size={18} color={theme.colors.textSecondary} />}
           </TouchableOpacity>
         </View>
       </View>
@@ -194,7 +193,7 @@ const AnimatedLoginForm: React.FC<LoginFormProps> = ({
         loading={isLoading}
         variant="primary"
         style={styles.formSubmitBtn}
-        icon={<ArrowRight size={18} color={theme.colors.background} strokeWidth={2.5} />}
+        icon={<BitzIcon icon={ArrowRight} size={18} color={theme.colors.background} />}
       />
 
       <TouchableOpacity

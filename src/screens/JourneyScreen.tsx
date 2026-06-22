@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Share, Alert, Dimensions, Modal } from 'react-native';
-import { Share2, ArrowUpRight, X, Calendar as CalendarIcon, Clock, Heart, Award, Compass, MessageSquare } from 'lucide-react-native';
+import { Share2, ArrowUpRight, X, CalendarDays, Clock, Heart, Award, Trophy, Target, Route, MessageSquare } from 'lucide-react-native';
 import { BarChart } from 'react-native-gifted-charts';
 import { Run, MemoryCard, getMoodEmoji, STOP_REASON_LABELS, formatFriendlyDate } from '../services/storage';
 import { theme } from '../theme/theme';
+import { BitzIcon } from '../components/BitzIcon';
 
 interface JourneyScreenProps {
   runs: Run[];
@@ -139,7 +140,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
         {!hasEnoughHistory ? (
           <View style={styles.emptyComparisonContainer}>
             <Text style={styles.emptyComparisonText}>
-              A comparação aparece quando houver mais histórico. {"\n"}Continue registrando corridas para comparar sua evolução.
+              Para comparar sua evolução, precisamos de alguns registros primeiro. {"\n"}Sem pressa, cada corrida que você fizer vai nos ajudar a contar sua história.
             </Text>
           </View>
         ) : (
@@ -181,7 +182,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
         {runs.length === 0 ? (
           <View style={styles.emptyChartContainer}>
             <Text style={styles.emptyChartText}>
-              A frequência aparecerá assim que você registrar sua primeira corrida.
+              Seu gráfico de consistência está esperando o primeiro passo. {"\n"}Não se preocupe com a distância, o importante é aparecer.
             </Text>
           </View>
         ) : (
@@ -249,7 +250,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
               Suas corridas registradas aparecerão aqui.
             </Text>
             <Text style={[styles.emptyMemoryText, { fontSize: 12, marginTop: 4 }]}>
-              Comece com uma corrida curta para criar seu primeiro registro.
+              Uma corrida curta ou mesmo uma caminhada já conta para manter o hábito vivo.
             </Text>
           </View>
         ) : (
@@ -310,7 +311,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
         {memoryCards.length === 0 ? (
           <View style={styles.emptyMemoryCard}>
             <Text style={styles.emptyMemoryText}>
-              Seus momentos marcantes aparecerão aqui conforme você registra corridas.
+              Suas pequenas vitórias e lembranças de consistência serão guardadas aqui. Complete seu primeiro treino para gerar seu primeiro cartão de memória!
             </Text>
           </View>
         ) : (
@@ -318,7 +319,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
             <View key={card.id} style={styles.memoryCard}>
               <Text style={styles.memoryText}>{card.text}</Text>
               <TouchableOpacity style={styles.shareCardBtn} onPress={() => handleShareCard(card.text)} activeOpacity={0.7}>
-                <Share2 size={16} color="#CCFF00" strokeWidth={1.5} />
+                <BitzIcon icon={Share2} size={16} color={theme.colors.primary} />
               </TouchableOpacity>
             </View>
           ))
@@ -331,7 +332,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
           <Text style={styles.closingText}>{getClosingText()}</Text>
           <TouchableOpacity style={styles.shareAllBtn} onPress={onShareAll} activeOpacity={0.85}>
             <Text style={styles.shareAllBtnText}>COMPARTILHAR EVOLUÇÃO</Text>
-            <ArrowUpRight size={18} color="#000000" strokeWidth={2.5} />
+            <BitzIcon icon={ArrowUpRight} size={18} color="#000000" />
           </TouchableOpacity>
         </View>
       )}
@@ -352,7 +353,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
                 style={styles.modalCloseBtn}
                 activeOpacity={0.7}
               >
-                <X size={20} color="#FFFFFF" />
+                <BitzIcon icon={X} size={20} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
 
@@ -372,7 +373,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
                 <ScrollView contentContainerStyle={styles.modalScrollBody} showsVerticalScrollIndicator={false}>
                   
                   <View style={styles.detailRow}>
-                    <CalendarIcon size={14} color="#A0A0A0" style={styles.detailRowIcon} />
+                    <BitzIcon icon={CalendarDays} size={14} color="#A0A0A0" style={styles.detailRowIcon} />
                     <View>
                       <Text style={styles.detailRowLabel}>Data</Text>
                       <Text style={styles.detailRowValue}>{formatDateTimeFriendly(run.date)}</Text>
@@ -380,7 +381,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
                   </View>
 
                   <View style={styles.detailRow}>
-                    <Award size={14} color="#A0A0A0" style={styles.detailRowIcon} />
+                    <BitzIcon icon={Target} size={14} color="#A0A0A0" style={styles.detailRowIcon} />
                     <View>
                       <Text style={styles.detailRowLabel}>Meta da corrida</Text>
                       <Text style={styles.detailRowValue}>
@@ -390,7 +391,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
                   </View>
 
                   <View style={styles.detailRow}>
-                    <Compass size={14} color="#A0A0A0" style={styles.detailRowIcon} />
+                    <BitzIcon icon={Route} size={14} color="#A0A0A0" style={styles.detailRowIcon} />
                     <View>
                       <Text style={styles.detailRowLabel}>Distância feita</Text>
                       <Text style={styles.detailRowValue}>{run.distance.toFixed(2).replace('.', ',')} km</Text>
@@ -398,7 +399,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
                   </View>
 
                   <View style={styles.detailRow}>
-                    <Clock size={14} color="#A0A0A0" style={styles.detailRowIcon} />
+                    <BitzIcon icon={Clock} size={14} color="#A0A0A0" style={styles.detailRowIcon} />
                     <View>
                       <Text style={styles.detailRowLabel}>Duração</Text>
                       <Text style={styles.detailRowValue}>{durationStr}</Text>
@@ -407,7 +408,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
 
                   {hasMeta && (
                     <View style={styles.detailRow}>
-                      <Award size={14} color="#A0A0A0" style={styles.detailRowIcon} />
+                      <BitzIcon icon={Trophy} size={14} color="#A0A0A0" style={styles.detailRowIcon} />
                       <View>
                         <Text style={styles.detailRowLabel}>Status</Text>
                         <Text style={[styles.detailRowValue, { color: isGoalMet ? '#CCFF00' : '#A0A0A0', fontWeight: 'bold' }]}>
@@ -418,7 +419,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
                   )}
 
                   <View style={styles.detailRow}>
-                    <Heart size={14} color="#A0A0A0" style={styles.detailRowIcon} />
+                    <BitzIcon icon={Heart} size={14} color="#A0A0A0" style={styles.detailRowIcon} />
                     <View>
                       <Text style={styles.detailRowLabel}>Como você chegou</Text>
                       <Text style={styles.detailRowValue}>{MOOD_LABELS[run.moodBefore] || 'Regular'}</Text>
@@ -426,7 +427,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
                   </View>
 
                   <View style={styles.detailRow}>
-                    <Heart size={14} color="#A0A0A0" style={styles.detailRowIcon} />
+                    <BitzIcon icon={Heart} size={14} color="#A0A0A0" style={styles.detailRowIcon} />
                     <View>
                       <Text style={styles.detailRowLabel}>Como você terminou</Text>
                       <Text style={styles.detailRowValue}>{MOOD_LABELS[run.moodAfter] || 'Regular'}</Text>
@@ -435,7 +436,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
 
                   {mappedReasons.length > 0 && (
                     <View style={styles.detailRow}>
-                      <X size={14} color="#FF3B30" style={styles.detailRowIcon} />
+                      <BitzIcon icon={X} size={14} color="#FF3B30" style={styles.detailRowIcon} />
                       <View style={{ flex: 1 }}>
                         <Text style={styles.detailRowLabel}>O que dificultou</Text>
                         <Text style={[styles.detailRowValue, { color: '#FF3B30' }]}>
@@ -447,7 +448,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
 
                   {run.stopNote ? (
                     <View style={styles.detailRow}>
-                      <MessageSquare size={14} color="#A0A0A0" style={styles.detailRowIcon} />
+                      <BitzIcon icon={MessageSquare} size={14} color="#A0A0A0" style={styles.detailRowIcon} />
                       <View style={{ flex: 1 }}>
                         <Text style={styles.detailRowLabel}>Observação</Text>
                         <Text style={styles.detailRowValue}>{run.stopNote}</Text>
@@ -457,7 +458,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({ runs, memoryCards,
 
                   {run.notes ? (
                     <View style={styles.detailRow}>
-                      <MessageSquare size={14} color="#A0A0A0" style={styles.detailRowIcon} />
+                      <BitzIcon icon={MessageSquare} size={14} color="#A0A0A0" style={styles.detailRowIcon} />
                       <View style={{ flex: 1 }}>
                         <Text style={styles.detailRowLabel}>Nota da corrida</Text>
                         <Text style={styles.detailRowValue}>{run.notes}</Text>

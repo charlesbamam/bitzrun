@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Frown, Meh, Smile, Laugh, SmilePlus } from 'lucide-react-native';
 import { theme } from '../theme/theme';
+import { BitzIcon } from './BitzIcon';
 
 interface MoodSelectorProps {
   selectedMood: number;
@@ -26,7 +27,6 @@ export const MoodSelector: React.FC<MoodSelectorProps> = ({
       <View style={styles.grid}>
         {moods.map((mood) => {
           const isSelected = selectedMood === mood.value;
-          const IconComponent = mood.icon;
           
           return (
             <TouchableOpacity
@@ -42,10 +42,11 @@ export const MoodSelector: React.FC<MoodSelectorProps> = ({
                 styles.iconWrapper,
                 isSelected && styles.iconWrapperSelected
               ]}>
-                <IconComponent
+                <BitzIcon
+                  icon={mood.icon}
                   size={24}
                   color={isSelected ? theme.colors.background : theme.colors.textSecondary}
-                  strokeWidth={isSelected ? 2.2 : 1.5}
+                  strokeWidth={isSelected ? 2.4 : 1.8}
                 />
               </View>
               <Text style={[

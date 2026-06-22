@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
-import { Award, Lock, Flame, Calendar, RefreshCw, Zap, Activity, Trophy, Smile, Check } from 'lucide-react-native';
+import { Award, Lock, Flame, CalendarDays, RefreshCw, Zap, Activity, Trophy, Smile, Check } from 'lucide-react-native';
 import { Achievement, formatFriendlyDate, Run } from '../services/storage';
 import { AchievementCard } from '../components/AchievementCard';
 import { theme } from '../theme/theme';
+import { BitzIcon } from '../components/BitzIcon';
 
 
 interface AchievementsScreenProps {
@@ -91,28 +92,28 @@ export const AchievementsScreen: React.FC<AchievementsScreenProps> = ({ unlocked
   const [activeTab, setActiveTab] = useState<'all' | 'consistency' | 'evolution'>('all');
 
   const renderIcon = (iconName: string, isUnlocked: boolean) => {
-    const color = isUnlocked ? '#CCFF00' : '#606060';
+    const color = isUnlocked ? theme.colors.primary : '#606060';
     const size = 20;
 
     switch (iconName) {
       case 'Calendar':
-        return <Calendar size={size} color={color} strokeWidth={1.5} />;
+        return <BitzIcon icon={CalendarDays} size={size} color={color} />;
       case 'Award':
-        return <Award size={size} color={color} strokeWidth={1.5} />;
+        return <BitzIcon icon={Award} size={size} color={color} />;
       case 'RefreshCw':
-        return <RefreshCw size={size} color={color} strokeWidth={1.5} />;
+        return <BitzIcon icon={RefreshCw} size={size} color={color} />;
       case 'Flame':
-        return <Flame size={size} color={color} strokeWidth={1.5} />;
+        return <BitzIcon icon={Flame} size={size} color={color} />;
       case 'Zap':
-        return <Zap size={size} color={color} strokeWidth={1.5} />;
+        return <BitzIcon icon={Zap} size={size} color={color} />;
       case 'Activity':
-        return <Activity size={size} color={color} strokeWidth={1.5} />;
+        return <BitzIcon icon={Activity} size={size} color={color} />;
       case 'Trophy':
-        return <Trophy size={size} color={color} strokeWidth={1.5} />;
+        return <BitzIcon icon={Trophy} size={size} color={color} />;
       case 'Smile':
-        return <Smile size={size} color={color} strokeWidth={1.5} />;
+        return <BitzIcon icon={Smile} size={size} color={color} />;
       default:
-        return <Award size={size} color={color} strokeWidth={1.5} />;
+        return <BitzIcon icon={Award} size={size} color={color} />;
     }
   };
 
@@ -239,9 +240,9 @@ export const AchievementsScreen: React.FC<AchievementsScreenProps> = ({ unlocked
                   isUnlocked ? styles.timelineDotUnlocked : styles.timelineDotLocked
                 ]}>
                   {isUnlocked ? (
-                    <Check size={12} color="#000000" strokeWidth={3} />
+                    <BitzIcon icon={Check} size={12} color="#000000" strokeWidth={3} />
                   ) : (
-                    <Lock size={10} color="#606060" strokeWidth={1.5} />
+                    <BitzIcon icon={Lock} size={10} color="#606060" strokeWidth={1.8} />
                   )}
                 </View>
                 {index < filteredDefinitions.length - 1 && (

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
-import { CheckCircle2, ChevronRight, Award, Bookmark, AlertTriangle } from 'lucide-react-native';
+import { CheckCircle2, ChevronRight, Award, AlertTriangle } from 'lucide-react-native';
+import { BitzIcon } from '../components/BitzIcon';
 import { StorageService, Achievement, MemoryCard as MemoryCardType, STOP_REASON_LABELS } from '../services/storage';
 import { theme } from '../theme/theme';
 import { ScreenContainer } from '../components/ScreenContainer';
@@ -98,7 +99,7 @@ export const MoodFeedbackScreen: React.FC<MoodFeedbackScreenProps> = ({
       <ScreenContainer scrollable style={styles.container}>
         <View style={styles.successHeader}>
           <View style={styles.successIconCircle}>
-            <CheckCircle2 size={36} color={theme.colors.primary} strokeWidth={1.5} />
+            <BitzIcon icon={CheckCircle2} size={36} color={theme.colors.primary} />
           </View>
           <Text style={styles.successTitle}>Registro concluído</Text>
           <Text style={styles.successSubtitle}>Você manteve o hábito vivo.</Text>
@@ -130,16 +131,16 @@ export const MoodFeedbackScreen: React.FC<MoodFeedbackScreenProps> = ({
           {newAchievements.length > 0 && (
             <View style={styles.unlockedContainer}>
               <View style={styles.unlockedSectionTitleRow}>
-                <Award size={16} color={theme.colors.primary} style={{ marginRight: 6 }} />
+                <BitzIcon icon={Award} size={16} color={theme.colors.primary} style={{ marginRight: 6 }} />
                 <Text style={styles.unlockedTitle}>Marcos Desbloqueados ({newAchievements.length})</Text>
               </View>
               {newAchievements.map(ach => (
                 <AchievementCard
-                  key={ach.id}
-                  title={ach.title}
-                  description={ach.description}
-                  isUnlocked={true}
-                  unlockedDate={ach.date}
+                   key={ach.id}
+                   title={ach.title}
+                   description={ach.description}
+                   isUnlocked={true}
+                   unlockedDate={ach.date}
                 />
               ))}
             </View>
@@ -152,7 +153,7 @@ export const MoodFeedbackScreen: React.FC<MoodFeedbackScreenProps> = ({
             onPress={handleFinish}
             variant="primary"
             style={styles.finishBtn}
-            icon={<ChevronRight size={18} color={theme.colors.background} strokeWidth={2.5} />}
+            icon={<BitzIcon icon={ChevronRight} size={18} color={theme.colors.background} />}
           />
         </View>
       </ScreenContainer>
@@ -240,7 +241,7 @@ export const MoodFeedbackScreen: React.FC<MoodFeedbackScreenProps> = ({
             {/* Aviso Preventivo de Saúde */}
             {showHealthWarning && (
               <View style={styles.warningContainer}>
-                <AlertTriangle size={16} color={theme.colors.error} style={styles.warningIcon} />
+                <BitzIcon icon={AlertTriangle} size={16} color={theme.colors.error} style={styles.warningIcon} />
                 <Text style={styles.warningText}>
                   Se o desconforto for forte ou persistente, pare e procure orientação profissional.
                 </Text>

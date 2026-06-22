@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, Animated, ActivityIndicator } from 'react-native';
-import { Flame } from 'lucide-react-native';
 import { theme } from '../theme/theme';
 import { ScreenContainer } from '../components/ScreenContainer';
+import { BitzSymbol } from '../components/BitzLogo';
 
 interface LoginTransitionScreenProps {
   userName: string;
@@ -24,26 +24,21 @@ export const LoginTransitionScreen: React.FC<LoginTransitionScreenProps> = ({ us
     Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
-          toValue: 1.12,
-          duration: 400,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 0.96,
-          duration: 400,
+          toValue: 1.08,
+          duration: 800,
           useNativeDriver: true,
         }),
         Animated.timing(pulseAnim, {
           toValue: 1,
-          duration: 200,
+          duration: 800,
           useNativeDriver: true,
-        }),
+        })
       ])
     ).start();
 
     const timer1 = setTimeout(() => {
-      setMessage('Construindo sua consistência...');
-    }, 600);
+      setMessage('Ajustando o ritmo ideal...');
+    }, 900);
 
     const timer2 = setTimeout(() => {
       setMessage(`Seja bem-vindo, ${userName}!`);
@@ -70,7 +65,7 @@ export const LoginTransitionScreen: React.FC<LoginTransitionScreenProps> = ({ us
     <ScreenContainer style={styles.container}>
       <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
         <Animated.View style={[styles.logoCircle, { transform: [{ scale: pulseAnim }] }]}>
-          <Flame size={48} color={theme.colors.primary} strokeWidth={1.5} />
+          <BitzSymbol size={48} color={theme.colors.primary} />
         </Animated.View>
         
         <Text style={styles.welcomeText}>Preparando sua jornada</Text>

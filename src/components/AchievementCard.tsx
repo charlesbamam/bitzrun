@@ -4,6 +4,7 @@ import { Lock, Check } from 'lucide-react-native';
 import { theme } from '../theme/theme';
 import { AppCard } from './AppCard';
 import { formatFriendlyDate } from '../services/storage';
+import { BitzIcon } from './BitzIcon';
 
 interface AchievementCardProps {
   title: string;
@@ -35,7 +36,7 @@ export const AchievementCard: React.FC<AchievementCardProps> = ({
           {isUnlocked && icon ? (
             icon
           ) : (
-            <Lock size={18} color={theme.colors.textSecondary} strokeWidth={2} />
+            <BitzIcon icon={Lock} size={18} color={theme.colors.textSecondary} />
           )}
         </View>
 
@@ -49,7 +50,7 @@ export const AchievementCard: React.FC<AchievementCardProps> = ({
             </Text>
             {isUnlocked && (
               <View style={styles.unlockedBadge}>
-                <Check size={8} color={theme.colors.background} strokeWidth={3.5} />
+                <BitzIcon icon={Check} size={8} color={theme.colors.background} strokeWidth={3.5} />
               </View>
             )}
           </View>

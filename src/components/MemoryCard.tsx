@@ -4,6 +4,7 @@ import { Share2 } from 'lucide-react-native';
 import { theme } from '../theme/theme';
 import { AppCard } from './AppCard';
 import { formatFriendlyDate } from '../services/storage';
+import { BitzIcon } from './BitzIcon';
 
 interface MemoryCardProps {
   date: string;
@@ -26,7 +27,7 @@ export const MemoryCard: React.FC<MemoryCardProps> = ({
         <Text style={styles.date}>{formatFriendlyDate(date)}</Text>
         {onShare && (
           <TouchableOpacity onPress={onShare} activeOpacity={0.7} style={styles.shareButton}>
-            <Share2 size={16} color={theme.colors.primary} />
+            <BitzIcon icon={Share2} size={16} color={theme.colors.primary} />
           </TouchableOpacity>
         )}
       </View>

@@ -1,10 +1,11 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, SafeAreaView, View } from 'react-native';
-import { Calendar, Award, TrendingUp, Flame, User } from 'lucide-react-native';
+import { CalendarDays, Trophy, Route, Play, UserRound } from 'lucide-react-native';
 import { theme } from '../theme/theme';
+import { BitzIcon } from './BitzIcon';
 
 type TabType = 'dashboard' | 'achievements' | 'journey';
-type FlowType = 'setup' | 'running' | 'end_run' | 'mood_feedback' | 'profile' | null;
+type FlowType = 'setup' | 'running' | 'end_run' | 'stop_reason' | 'mood_feedback' | 'profile' | null;
 
 interface BottomTabsProps {
   activeTab: TabType;
@@ -41,7 +42,11 @@ export const BottomTabs: React.FC<BottomTabsProps> = ({
           }}
           activeOpacity={0.7}
         >
-          <Calendar size={18} color={isHomeActive ? theme.colors.primary : theme.colors.textSecondary} />
+          <BitzIcon
+            icon={CalendarDays}
+            size={20}
+            color={isHomeActive ? theme.colors.primary : theme.colors.textSecondary}
+          />
           <Text style={[styles.tabLabel, isHomeActive && styles.tabLabelActive]}>Hoje</Text>
         </TouchableOpacity>
 
@@ -51,7 +56,11 @@ export const BottomTabs: React.FC<BottomTabsProps> = ({
           onPress={() => onTabPress('journey')}
           activeOpacity={0.7}
         >
-          <TrendingUp size={18} color={isJourneyActive ? theme.colors.primary : theme.colors.textSecondary} />
+          <BitzIcon
+            icon={Route}
+            size={20}
+            color={isJourneyActive ? theme.colors.primary : theme.colors.textSecondary}
+          />
           <Text style={[styles.tabLabel, isJourneyActive && styles.tabLabelActive]}>Jornada</Text>
         </TouchableOpacity>
 
@@ -62,7 +71,7 @@ export const BottomTabs: React.FC<BottomTabsProps> = ({
           activeOpacity={0.8}
         >
           <View style={styles.centerButton}>
-            <Flame size={24} color={theme.colors.background} strokeWidth={2} />
+            <BitzIcon icon={Play} size={22} color={theme.colors.background} strokeWidth={2.5} />
           </View>
           <Text style={[styles.tabLabel, styles.centerLabel]}>Correr</Text>
         </TouchableOpacity>
@@ -73,7 +82,11 @@ export const BottomTabs: React.FC<BottomTabsProps> = ({
           onPress={() => onTabPress('achievements')}
           activeOpacity={0.7}
         >
-          <Award size={18} color={isAchievementsActive ? theme.colors.primary : theme.colors.textSecondary} />
+          <BitzIcon
+            icon={Trophy}
+            size={20}
+            color={isAchievementsActive ? theme.colors.primary : theme.colors.textSecondary}
+          />
           <Text style={[styles.tabLabel, isAchievementsActive && styles.tabLabelActive]}>Conquistas</Text>
         </TouchableOpacity>
 
@@ -83,7 +96,11 @@ export const BottomTabs: React.FC<BottomTabsProps> = ({
           onPress={onProfilePress}
           activeOpacity={0.7}
         >
-          <User size={18} color={isProfileActive ? theme.colors.primary : theme.colors.textSecondary} />
+          <BitzIcon
+            icon={UserRound}
+            size={20}
+            color={isProfileActive ? theme.colors.primary : theme.colors.textSecondary}
+          />
           <Text style={[styles.tabLabel, isProfileActive && styles.tabLabelActive]}>Perfil</Text>
         </TouchableOpacity>
       </View>

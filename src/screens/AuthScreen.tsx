@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, ScrollView, Alert } from 'react-native';
-import { Flame, Mail, Lock, User, Eye, EyeOff } from 'lucide-react-native';
+import { Mail, Lock, UserRound, Eye, EyeOff } from 'lucide-react-native';
 import { StorageService } from '../services/storage';
+import { theme } from '../theme/theme';
+import { BitzIcon } from '../components/BitzIcon';
+import { BitzLogo } from '../components/BitzLogo';
 
 interface AuthScreenProps {
   onSuccess: (userName: string) => void;
@@ -73,10 +76,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} keyboardShouldPersistTaps="handled">
       {/* Logo e Cabeçalho */}
       <View style={styles.header}>
-        <View style={styles.logoCircle}>
-          <Flame size={32} color="#CCFF00" strokeWidth={1.5} />
-        </View>
-        <Text style={styles.logoText}>BITZRUN</Text>
+        <BitzLogo width={180} height={59} showBackground={true} />
         <Text style={styles.subtitleText}>A sua identidade de corrida começa aqui.</Text>
       </View>
 
@@ -109,7 +109,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
           <View style={styles.inputWrapper}>
             <Text style={styles.label}>Como prefere ser chamado?</Text>
             <View style={styles.inputContainer}>
-              <User size={18} color="#A0A0A0" style={styles.inputIcon} />
+              <BitzIcon icon={UserRound} size={18} color="#A0A0A0" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Nome ou apelido"
@@ -125,7 +125,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
         <View style={styles.inputWrapper}>
           <Text style={styles.label}>E-mail</Text>
           <View style={styles.inputContainer}>
-            <Mail size={18} color="#A0A0A0" style={styles.inputIcon} />
+            <BitzIcon icon={Mail} size={18} color="#A0A0A0" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="exemplo@email.com"
@@ -142,7 +142,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
         <View style={styles.inputWrapper}>
           <Text style={styles.label}>Senha</Text>
           <View style={styles.inputContainer}>
-            <Lock size={18} color="#A0A0A0" style={styles.inputIcon} />
+            <BitzIcon icon={Lock} size={18} color="#A0A0A0" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Mínimo 6 caracteres"
@@ -154,7 +154,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
               autoCorrect={false}
             />
             <TouchableOpacity onPress={() => setSecureText(!secureText)} style={styles.eyeBtn}>
-              {secureText ? <Eye size={18} color="#A0A0A0" /> : <EyeOff size={18} color="#A0A0A0" />}
+              {secureText ? <BitzIcon icon={Eye} size={18} color="#A0A0A0" /> : <BitzIcon icon={EyeOff} size={18} color="#A0A0A0" />}
             </TouchableOpacity>
           </View>
         </View>
@@ -163,7 +163,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
           <View style={styles.inputWrapper}>
             <Text style={styles.label}>Confirme a sua Senha</Text>
             <View style={styles.inputContainer}>
-              <Lock size={18} color="#A0A0A0" style={styles.inputIcon} />
+              <BitzIcon icon={Lock} size={18} color="#A0A0A0" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Digite a senha novamente"
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '300',
     textAlign: 'center',
-    marginTop: 6,
+    marginTop: 16,
     fontFamily: 'System',
   },
   tabSelector: {
