@@ -8,6 +8,7 @@ import { AppButton } from '../components/AppButton';
 import { MoodSelector } from '../components/MoodSelector';
 import { AppHeader } from '../components/AppHeader';
 import { BitzIcon } from '../components/BitzIcon';
+import { useRunTrackerGPS } from '../hooks/useRunTrackerGPS';
 
 const BEYOND_GOAL_MESSAGES = [
   "Você já venceu o treino. Agora está construindo confiança.",
@@ -30,8 +31,8 @@ interface StartRunScreenProps {
 }
 
 export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFinishRun }) => {
-  // Estado 1: Preparação ('setup') ou Corrida ('running') ou Pausado ('paused')
-  const [status, setStatus] = useState<'setup' | 'running' | 'paused'>('setup');
+  // Controle de tela de preparação x tela de corrida ativa
+  const [isSetupActive, setIsSetupActive] = useState<boolean>(true);
   
   // Dados de preparação
   const [moodBefore, setMoodBefore] = useState<number>(3); // 1 a 5, default 3 (Regular)
@@ -39,9 +40,18 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
   const [customGoalText, setCustomGoalText] = useState<string>('');
   const [targetKm, setTargetKm] = useState<number>(1.0);
 
-  // Dados de corrida
-  const [seconds, setSeconds] = useState<number>(0);
-  const [distance, setDistance] = useState<number>(0);
+  // Hook do GPS Real
+  const {
+    status: gpsStatus,
+    distanceKm,
+    durationSeconds,
+    currentPace,
+    gpsAccuracy,
+    startTracking,
+    pauseTracking,
+    resumeTracking,
+    stopTracking,
+  } = useRunTrackerGPS();
 
   // Estados de Celebração e Modo Além da Meta
   const [hasCelebrated, setHasCelebrated] = useState<boolean>(false);
@@ -55,25 +65,28 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
   const [activeBanner, setActiveBanner] = useState<RunningNotification | null>(null);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
 
-  // Referências para evitar problemas de closure no setInterval
-  const timerRef = useRef<any>(null);
+  // Referências para triggers
   const secondsRef = useRef<number>(0);
   const distanceRef = useRef<number>(0);
   const triggeredAlertsRef = useRef<string[]>([]);
   const notificationsRef = useRef<RunningNotification[]>([]);
   const hasCelebratedRef = useRef<boolean>(false);
 
-  // Sincronizar referências com os estados
-  secondsRef.current = seconds;
-  distanceRef.current = distance;
+  // Sincronizar referências com os estados do GPS
+  secondsRef.current = durationSeconds;
+  distanceRef.current = distanceKm;
 
   // Impedir voltar via botão físico do Android durante a corrida
   useEffect(() => {
     const backAction = () => {
-      if (status !== 'setup') {
+      if (!isSetupActive) {
         Alert.alert('Corrida em andamento', 'Deseja realmente abandonar a corrida?', [
           { text: 'Não', onPress: () => null, style: 'cancel' },
-          { text: 'Sim, abandonar', onPress: () => onCancel() },
+          { text: 'Sim, abandonar', onPress: () => {
+              stopTracking();
+              onCancel();
+            }
+          },
         ]);
         return true;
       }
@@ -82,7 +95,7 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
     return () => backHandler.remove();
-  }, [status]);
+  }, [isSetupActive]);
 
   // Dispara uma notificação motivacional
   const triggerMotivationalAlert = (id: string, message: string) => {
@@ -143,51 +156,32 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
     notificationsRef.current = updated;
   };
 
-  // Efeito do Cronômetro + Simulação de Distância + Alertas Motivacionais
+  // Triggers reativos baseados nos valores reais do GPS
   useEffect(() => {
-    if (status === 'running') {
-      timerRef.current = setInterval(() => {
-        setSeconds(prev => {
-          const nextSecs = prev + 1;
-          checkTimeTriggers(nextSecs);
-          return nextSecs;
-        });
-        
-        const randomIncrement = 0.0022 + Math.random() * 0.0008;
-        setDistance(prev => {
-          const nextDist = prev + randomIncrement;
-          checkDistanceTriggers(nextDist);
-          
-          // Celebração: quando atinge ou ultrapassa a meta e ainda não celebrou
-          if (nextDist >= targetKm && !hasCelebratedRef.current) {
-            hasCelebratedRef.current = true;
-            setHasCelebrated(true);
-            setShowCelebrationModal(true);
-            try {
-              // Vibração para chamar atenção (padrão curto-longo-curto)
-              Vibration.vibrate([0, 150, 100, 400]);
-            } catch (e) {
-              console.log('Sem suporte a vibração:', e);
-            }
-          }
-          
-          return nextDist;
-        });
-      }, 1000);
-    } else {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
+    if (gpsStatus === 'running') {
+      checkTimeTriggers(durationSeconds);
+    }
+  }, [durationSeconds, gpsStatus]);
+
+  useEffect(() => {
+    if (gpsStatus === 'running') {
+      checkDistanceTriggers(distanceKm);
+      
+      // Celebração: quando atinge ou ultrapassa a meta e ainda não celebrou
+      if (distanceKm >= targetKm && !hasCelebratedRef.current) {
+        hasCelebratedRef.current = true;
+        setHasCelebrated(true);
+        setShowCelebrationModal(true);
+        try {
+          Vibration.vibrate([0, 150, 100, 400]);
+        } catch (e) {
+          console.log('Sem suporte a vibração:', e);
+        }
       }
     }
+  }, [distanceKm, gpsStatus, targetKm]);
 
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, [status, targetKm]);
-
-  const handleStart = () => {
+  const handleStart = async () => {
     let parsedKm = 1.0;
 
     if (selectedGoalOption === '0,5 km') {
@@ -223,9 +217,9 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
     setIsBeyondGoalMode(false);
     setBeyondGoalMessage('');
 
-    setStatus('running');
-    setSeconds(0);
-    setDistance(0);
+    // Iniciar o rastreamento GPS
+    setIsSetupActive(false);
+    await startTracking();
   };
 
   const handleContinueBeyond = () => {
@@ -236,24 +230,33 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
   };
 
   const handlePauseToggle = () => {
-    setStatus(prev => (prev === 'running' ? 'paused' : 'running'));
+    if (gpsStatus === 'running') {
+      pauseTracking();
+    } else if (gpsStatus === 'paused') {
+      resumeTracking();
+    }
   };
 
   const handleEndPress = () => {
-    if (seconds < 5) {
+    if (durationSeconds < 5) {
       Alert.alert(
         'Treino muito curto',
-        'Sua corrida durou menos de 5 segundos. Deseja realmente encerrar?',
+        'Sua corrida durou menos de 5 segundos. Deseja realmente abandonar?',
         [
           { text: 'Continuar correndo', style: 'cancel' },
-          { text: 'Encerrar', onPress: () => onCancel() }
+          { text: 'Abandonar', onPress: () => {
+              stopTracking();
+              onCancel();
+            }
+          }
         ]
       );
       return;
     }
 
     const goalLabel = `${targetKm.toFixed(1).replace('.', ',')} km`;
-    onFinishRun(seconds, parseFloat(distance.toFixed(2)), moodBefore, goalLabel, targetKm);
+    stopTracking();
+    onFinishRun(durationSeconds, parseFloat(distanceKm.toFixed(2)), moodBefore, goalLabel, targetKm);
   };
 
   const formatTime = (totalSecs: number) => {
@@ -264,10 +267,46 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
 
   const getProgressRatio = () => {
     if (targetKm <= 0) return 0;
-    return Math.min(distance / targetKm, 1);
+    return Math.min(distanceKm / targetKm, 1);
   };
 
-  if (status === 'setup') {
+  const getGpsStatusLabel = () => {
+    switch (gpsStatus) {
+      case 'permissions_pending':
+        return 'PERMISSÃO';
+      case 'searching':
+        return 'BUSCANDO GPS';
+      case 'running':
+        return 'CORRENDO';
+      case 'paused':
+        return 'PAUSADO';
+      case 'denied':
+        return 'PERMISSÃO NEGADA';
+      case 'unavailable':
+        return 'SEM SINAL GPS';
+      default:
+        return 'INICIANDO';
+    }
+  };
+
+  const getGpsStatusColor = () => {
+    switch (gpsStatus) {
+      case 'permissions_pending':
+      case 'searching':
+        return '#FFA500';
+      case 'running':
+        return theme.colors.primary;
+      case 'paused':
+        return theme.colors.textSecondary;
+      case 'denied':
+      case 'unavailable':
+        return theme.colors.error;
+      default:
+        return theme.colors.textSecondary;
+    }
+  };
+
+  if (isSetupActive) {
     return (
       <ScreenContainer scrollable avoidKeyboard>
         <AppHeader title="Meta da corrida" onBack={onCancel} />
@@ -367,7 +406,7 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
   }, [showCelebrationModal]);
 
   const getExtraDistanceText = () => {
-    const extra = distance - targetKm;
+    const extra = distanceKm - targetKm;
     if (extra <= 0) return '+0 m';
     if (extra < 1.0) {
       const meters = Math.round(extra * 1000);
@@ -384,13 +423,13 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
       <View style={styles.activeHeaderContainer}>
         <View style={[
           styles.statusIndicator,
-          { borderColor: status === 'running' ? theme.colors.primary : theme.colors.textSecondary }
+          { borderColor: getGpsStatusColor() }
         ]}>
           <Text style={[
             styles.statusText,
-            { color: status === 'running' ? theme.colors.primary : theme.colors.textSecondary }
+            { color: getGpsStatusColor() }
           ]}>
-            {status === 'running' ? 'CORRENDO' : 'PAUSADO'}
+            {getGpsStatusLabel()}
           </Text>
         </View>
 
@@ -414,15 +453,22 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
 
       {/* Visores Principais */}
       <View style={styles.dashboardContainer}>
-        <Text style={styles.timerValue}>{formatTime(seconds)}</Text>
+        <Text style={styles.timerValue}>{formatTime(durationSeconds)}</Text>
         <Text style={styles.timerLabel}>Tempo acumulado</Text>
 
-        <View style={[
-          styles.distanceBlock,
-          isBeyondGoalMode && styles.distanceBlockBeyond
-        ]}>
-          <Text style={styles.distanceValue}>{distance.toFixed(2).replace('.', ',')} km</Text>
-          <Text style={styles.distanceLabel}>{isBeyondGoalMode ? 'Progresso Total' : 'Distância simulada'}</Text>
+        {/* Métricas reais (Distância + Ritmo Lado a Lado) */}
+        <View style={styles.metricsRow}>
+          <View style={styles.metricBlock}>
+            <Text style={styles.metricValue}>{distanceKm.toFixed(2).replace('.', ',')}</Text>
+            <Text style={styles.metricLabel}>{isBeyondGoalMode ? 'Progresso Total (km)' : 'Distância real (km)'}</Text>
+          </View>
+          
+          <View style={styles.divider} />
+
+          <View style={styles.metricBlock}>
+            <Text style={styles.metricValue}>{currentPace}</Text>
+            <Text style={styles.metricLabel}>Ritmo médio (/km)</Text>
+          </View>
         </View>
 
         {/* Barra de Progresso e Meta / Modo Além da Meta */}
@@ -453,7 +499,28 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
             <View style={styles.progressBarBg}>
               <View style={[styles.progressBarFill, { width: `${progressRatio * 100}%` }]} />
             </View>
-            <Text style={styles.simulationText}>Simulação de treino ativa localmente</Text>
+            
+            {/* Informações reais da qualidade do sinal do GPS */}
+            {gpsStatus === 'running' && gpsAccuracy !== null && (
+              <Text style={styles.gpsAccuracyText}>
+                Sinal do GPS ativo (precisão: {gpsAccuracy.toFixed(1)}m)
+              </Text>
+            )}
+            {gpsStatus === 'searching' && (
+              <Text style={styles.gpsAccuracyText}>
+                Procurando sinal do GPS... Fique em céu aberto.
+              </Text>
+            )}
+            {gpsStatus === 'denied' && (
+              <Text style={[styles.gpsAccuracyText, { color: theme.colors.error }]}>
+                Permissão de GPS negada. Ative nas configurações do iPhone.
+              </Text>
+            )}
+            {gpsStatus === 'unavailable' && (
+              <Text style={[styles.gpsAccuracyText, { color: theme.colors.error }]}>
+                GPS indisponível. Verifique se a localização está ativa.
+              </Text>
+            )}
           </View>
         )}
       </View>
@@ -461,7 +528,7 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
       {/* Rodapé com Ações */}
       <View style={styles.activeFooter}>
         <View style={styles.activeActionsRow}>
-          {status === 'running' ? (
+          {gpsStatus === 'running' ? (
             <TouchableOpacity
               style={[styles.actionRoundButton, styles.pauseButton]}
               onPress={handlePauseToggle}
@@ -470,11 +537,12 @@ export const StartRunScreen: React.FC<StartRunScreenProps> = ({ onCancel, onFini
               <BitzIcon icon={Pause} size={24} color={theme.colors.text} />
             </TouchableOpacity>
           ) : (
-            // Alto contraste para o botão Play/Continuar quando pausado (Verde-limão)
+            // Exibir Play se estiver pausado ou buscando sinal, permitindo re-iniciar se necessário
             <TouchableOpacity
               style={[styles.actionRoundButton, styles.playButtonActive]}
               onPress={handlePauseToggle}
               activeOpacity={0.8}
+              disabled={gpsStatus === 'denied' || gpsStatus === 'unavailable'}
             >
               <BitzIcon icon={Play} size={24} color={theme.colors.background} fill={theme.colors.background} />
             </TouchableOpacity>
@@ -718,20 +786,35 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginTop: -theme.spacing.sm,
   },
-  distanceBlock: {
+  metricsRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: theme.spacing.sm,
+    justifyContent: 'space-around',
+    width: '100%',
+    marginVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.xl,
   },
-  distanceValue: {
+  metricBlock: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  metricValue: {
     color: theme.colors.text,
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
   },
-  distanceLabel: {
+  metricLabel: {
     color: theme.colors.textSecondary,
-    fontSize: 11,
+    fontSize: 10,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  divider: {
+    width: 1,
+    height: 36,
+    backgroundColor: theme.colors.border,
   },
   progressContainer: {
     width: '100%',
@@ -765,9 +848,9 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
     borderRadius: 4,
   },
-  simulationText: {
+  gpsAccuracyText: {
     color: theme.colors.textSecondary,
-    fontSize: 9,
+    fontSize: 10,
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: 8,
